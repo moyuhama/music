@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import {
   AudioLines,
-  Heart,
   Play,
   Pause,
   SkipBack,
@@ -64,18 +63,7 @@ export default function PlayerBar({
           </button>
           <small>{current?.artist ?? "导入音乐，开始聆听"}</small>
         </div>
-        {current && (
-          <button
-            className={`icon-button favorite ${current.favorite ? "liked" : ""}`}
-            aria-label="收藏当前音乐"
-            onClick={() => m.favorite(current.id)}
-          >
-            <Heart
-              size={18}
-              fill={current.favorite ? "currentColor" : "none"}
-            />
-          </button>
-        )}
+
       </div>
       <div className="playback-center">
         <div className="playback-buttons">
