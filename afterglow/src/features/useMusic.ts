@@ -5,7 +5,7 @@ import { player } from "../player/engine";
 import { libraryRepository } from "../storage";
 import { available, registerFile, forgetFile } from "../sources";
 import { readMetadata } from "./import-metadata";
-import { parseLrc } from "../domain/lyrics";
+import { parseLrc, removeDemoLyrics } from "../domain/lyrics";
 import { mergeCatalog } from "../domain/catalog";
 export function useMusic() {
   const [catalogIds, setCatalogIds] = useState<string[]>([]);
@@ -30,7 +30,7 @@ export function useMusic() {
       .then((saved) => {
         if (!live) return;
         const merged = mergeCatalog(
-          saved?.tracks ?? [],
+          (saved?.tracks ?? []).map(removeDemoLyrics),
           saved?.catalogIds ?? [],
         );
         setTracks(merged.tracks);

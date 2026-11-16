@@ -1,4 +1,4 @@
-import type { LyricLine } from "./types";
+import type { LyricLine, Track } from "./types";
 export function parseLrc(text: string): LyricLine[] {
   const lines: LyricLine[] = [];
   const offset = Number(text.match(/\[offset:([+-]?\d+)\]/i)?.[1] || 0) / 1000;
@@ -22,4 +22,23 @@ export function activeLine(lines: LyricLine[], time: number) {
     else break;
   }
   return index;
+}
+
+// Remove only the bundled QA transcript; keep user-imported lyrics intact.
+const demoTranscript = [
+  "余音 · 歌词同步演示",
+  "这是本地 LRC 时间轴测试",
+  "播放时，会高亮当前这一行",
+  "点击任意一句，可以跳转进度",
+  "导入你的歌曲和对应歌词",
+  "开始属于你的聆听时刻",
+];
+export function removeDemoLyrics(track: Track): Track {
+  if (
+    !["sample-evening", "sample-city", "sample-moon"].includes(track.id) ||
+    track.lyrics?.length !== demoTranscript.length ||
+    !track.lyrics.every((line, i) => line.text === demoTranscript[i])
+  ) return track;
+  const { lyrics: _lyrics, lyricText: _lyricText, ...clean } = track;
+  return clean;
 }
