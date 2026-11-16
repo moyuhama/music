@@ -5,7 +5,7 @@ import { player } from "../player/engine";
 import { libraryRepository } from "../storage";
 import { available, registerFile, forgetFile } from "../sources";
 import { readMetadata } from "./import-metadata";
-import { parseLrc, removeDemoLyrics } from "../domain/lyrics";
+import { removeDemoLyrics } from "../domain/lyrics";
 import { mergeCatalog } from "../domain/catalog";
 export function useMusic() {
   const [catalogIds, setCatalogIds] = useState<string[]>([]);
@@ -301,20 +301,6 @@ export function useMusic() {
     setQueue((old) => insertNext(old, state.trackId, track.id));
     notify(`已添加到下一首：${track.title}`);
   }
-  async function importLyrics(file: File, trackId: string) {
-    if (file.size > 1024 * 1024) {
-      notify("歌词文件过大，请选择小于 1 MB 的 LRC 文件。");
-      return;
-    }
-    const text = await file.text();
-    const lyrics = parseLrc(text);
-    if (!lyrics.length) {
-      notify("没有识别到时间轴，请导入带 [00:00.00] 标记的 LRC 歌词。");
-      return;
-    }
-    updateTrack(trackId, { lyrics });
-    notify(`已导入 ${lyrics.length} 行歌词`);
-  }
   function addRemote(
     url: string,
     title: string,
@@ -414,7 +400,6 @@ export function useMusic() {
     removeTrack,
     removeFromQueue,
     playNext,
-    importLyrics,
     addRemote,
     addPlaylist,
     addToPlaylist,

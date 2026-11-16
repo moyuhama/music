@@ -83,8 +83,6 @@ export default function App() {
   }
   useEffect(() => () => cancelPlayerTransition(), []);
   const input = useRef<HTMLInputElement>(null);
-  const lyricsInput = useRef<HTMLInputElement>(null);
-  const lyricTarget = useRef("");
   const directoryInput = useRef<HTMLInputElement>(null);
   const playlist = view.startsWith("playlist:")
     ? m.playlists.find((p) => p.id === view.slice(9))
@@ -121,10 +119,6 @@ export default function App() {
     tracks: filtered.filter((t) => (t.album || "未知专辑") === name),
   }));
   const importClick = () => input.current?.click();
-  const chooseLyrics = (id: string) => {
-    lyricTarget.current = id;
-    lyricsInput.current?.click();
-  };
   function changeView(value: View) {
     setPlayerView(false, () => {
       setView(value);
@@ -172,17 +166,6 @@ export default function App() {
         {...{ webkitdirectory: "" }}
         onChange={(e) => {
           if (e.target.files) void m.importFiles(e.target.files);
-          e.target.value = "";
-        }}
-      />
-      <input
-        ref={lyricsInput}
-        hidden
-        type="file"
-        accept=".lrc,text/plain"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) void m.importLyrics(file, lyricTarget.current);
           e.target.value = "";
         }}
       />
@@ -540,7 +523,6 @@ export default function App() {
                     music={m}
                     tracks={filtered}
                     onImport={importClick}
-                    onLyrics={chooseLyrics}
                     onEdit={setEditTrack}
                     onCreatePlaylist={() => setPlaylistOpen(true)}
                     playlistId={playlist?.id}
@@ -648,7 +630,6 @@ export default function App() {
               active={detailOpen}
               music={m}
               onClose={() => setPlayerView(false)}
-              onLyrics={chooseLyrics}
               onImport={importClick}
               onRemote={() => setRemoteOpen(true)}
               onSample={() => m.addSample(0)}

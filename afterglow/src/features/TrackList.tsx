@@ -5,7 +5,6 @@ import {
   MoreHorizontal,
   CornerDownRight,
   Trash2,
-  FileMusic,
   Plus,
   Pencil,
   Music2,
@@ -20,7 +19,6 @@ interface Props {
   music: MusicController;
   tracks: Track[];
   onImport(): void;
-  onLyrics(id: string): void;
   onEdit(track: Track): void;
   onCreatePlaylist(): void;
   playlistId?: string;
@@ -30,7 +28,6 @@ export default function TrackList({
   music: m,
   tracks,
   onImport,
-  onLyrics,
   onEdit,
   onCreatePlaylist,
   playlistId,
@@ -135,10 +132,6 @@ export default function TrackList({
                 <button onClick={() => onEdit(track)}>
                   <Pencil size={15} />
                   编辑歌曲信息
-                </button>
-                <button onClick={() => onLyrics(track.id)}>
-                  <FileMusic size={15} />
-                  导入 LRC 歌词
                 </button>
                 <div className="menu-separator" />
                 <span className="menu-label">添加到歌单</span>

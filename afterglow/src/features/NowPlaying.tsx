@@ -1,7 +1,5 @@
 import { useEffect } from "react";
 import {
-  Heart,
-  FileMusic,
   Plus,
   Link2,
   Play,
@@ -16,7 +14,6 @@ interface Props {
   active: boolean;
   music: MusicController;
   onClose(): void;
-  onLyrics(id: string): void;
   onImport(): void;
   onRemote(): void;
   onSample(): void;
@@ -25,7 +22,6 @@ export default function NowPlaying({
   active,
   music: m,
   onClose,
-  onLyrics,
   onImport,
   onRemote,
   onSample,
@@ -84,28 +80,8 @@ export default function NowPlaying({
               </div>
             )}
           </button>
-          <div className="record-actions">
-            {track ? (
-              <>
-                <button
-                  className={`glass-button ${track.favorite ? "liked" : ""}`}
-                  aria-label="播放详情收藏"
-                  onClick={() => m.favorite(track.id)}
-                >
-                  <Heart
-                    size={19}
-                    fill={track.favorite ? "currentColor" : "none"}
-                  />
-                </button>
-                <button
-                  className="glass-button"
-                  onClick={() => onLyrics(track.id)}
-                >
-                  <FileMusic size={18} />
-                  导入歌词
-                </button>
-              </>
-            ) : (
+          {!track && (
+            <div className="record-actions">
               <button
                 className="glass-button"
                 onClick={onSample}
@@ -114,8 +90,8 @@ export default function NowPlaying({
                 <Play size={14} />
                 听一段原创试听
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         <div className="lyrics-side">
           <div className="song-heading" key={track?.id ?? "empty"}>
