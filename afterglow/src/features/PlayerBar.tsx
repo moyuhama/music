@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   AudioLines,
   Play,
@@ -20,11 +21,13 @@ import Cover from "../components/Cover";
 import type { MusicController } from "./useMusic";
 export default function PlayerBar({
   music: m,
+  listeningHost,
   openDetail,
   openQueue,
   queueOpen,
 }: {
   music: MusicController;
+  listeningHost?: HTMLDivElement | null;
   openDetail(): void;
   openQueue(): void;
   queueOpen: boolean;
@@ -33,9 +36,18 @@ export default function PlayerBar({
   const lastVolume = useRef(0.7);
   const playing = state.status === "playing";
   const loading = state.status === "loading";
-  return (
-    <section className="player-bar" aria-label="播放控制">
-      <div className="now-playing">
+  const repeating = m.mode === "repeat-one";
+  const modeName = m.mode === "sequence" ? "顺序" : m.mode === "shuffle" ? "随机" : "单曲循环";
+  function cycleMode() {
+    if (listeningHost) m.setMode(repeating ? "sequence" : "repeat-one");
+    else m.setMode(m.mode === "sequence" ? "repeat-one" : repeating ? "shuffle" : "sequence");
+  }
+  const controls = (
+    <section
+      className={listeningHost ? "listening-controls" : "player-bar"}
+      aria-label="播放控制"
+    >
+      {!listeningHost && <div className="now-playing">
         <button
           className="now-art"
           aria-label="打开播放详情"
@@ -64,23 +76,15 @@ export default function PlayerBar({
           <small>{current?.artist ?? "导入音乐，开始聆听"}</small>
         </div>
 
-      </div>
+      </div>}
       <div className="playback-center">
         <div className="playback-buttons">
           <button
-            className={`icon-button mode-button ${m.mode !== "sequence" ? "on" : ""}`}
-            aria-label={`播放模式：${m.mode === "sequence" ? "顺序" : m.mode === "shuffle" ? "随机" : "单曲循环"}，点击切换`}
-            onClick={() =>
-              m.setMode(
-                m.mode === "sequence"
-                  ? "repeat-one"
-                  : m.mode === "repeat-one"
-                    ? "shuffle"
-                    : "sequence",
-              )
-            }
+            className={`icon-button mode-button ${(listeningHost ? m.mode === "repeat-one" : m.mode !== "sequence") ? "on" : ""}`}
+            aria-label={listeningHost ? `单曲循环：${repeating ? "开启" : "关闭"}` : `播放模式：${modeName}，点击切换`}
+            onClick={cycleMode}
           >
-            {m.mode === "shuffle" ? (
+            {m.mode === "shuffle" && !listeningHost ? (
               <Shuffle size={17} />
             ) : m.mode === "repeat-one" ? (
               <Repeat1 size={17} />
@@ -117,14 +121,23 @@ export default function PlayerBar({
           >
             <SkipForward size={20} fill="currentColor" />
           </button>
-          <button
+          {listeningHost && (
+            <button
+              className={`icon-button shuffle-button ${m.mode === "shuffle" ? "on" : ""}`}
+              aria-label={`随机播放：${m.mode === "shuffle" ? "开启" : "关闭"}`}
+              onClick={() => m.setMode(m.mode === "shuffle" ? "sequence" : "shuffle")}
+            >
+              <Shuffle size={18} />
+            </button>
+          )}
+          {!listeningHost && current?.lyrics?.length ? <button
             className="lyric-button"
             aria-label="打开歌词"
             onClick={openDetail}
             disabled={!current}
           >
             词
-          </button>
+          </button> : null}
         </div>
         <div className="progress-row">
           <span>{formatTime(state.time)}</span>
@@ -146,7 +159,7 @@ export default function PlayerBar({
           <span>{formatTime(state.duration)}</span>
         </div>
       </div>
-      <div className="player-extra">
+      {!listeningHost && <div className="player-extra">
         <button
           className="icon-button"
           aria-label={state.volume ? "静音" : "取消静音"}
@@ -177,7 +190,8 @@ export default function PlayerBar({
           <ListMusic size={21} />
           <small>{m.queue.length}</small>
         </button>
-      </div>
+      </div>}
     </section>
   );
+  return listeningHost ? createPortal(controls, listeningHost) : controls;
 }

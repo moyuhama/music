@@ -4,4 +4,5 @@ import "./styles/app.css";
 import "./styles/theme.css";
 import "./styles/navigation.css";
 import "./styles/interactions.css";
+import "./styles/listening.css";
 createRoot(document.getElementById("root")!).render(<App />);

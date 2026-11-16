@@ -11,6 +11,7 @@ import {
   Music2,
   Clock3,
   ChevronLeft,
+  ChevronDown,
   ChevronRight,
   FolderOpen,
   ListMusic,
@@ -19,7 +20,6 @@ import {
   Check,
   X,
   LoaderCircle,
-  Headphones,
   ShieldCheck,
 } from "lucide-react";
 import type { Track, View } from "./domain/types";
@@ -127,11 +127,15 @@ export default function App() {
       setLayout("songs");
     });
   }
+  const [controlsHost, setControlsHost] = useState<HTMLDivElement | null>(null);
   const sampleNames = ["晚风来信", "城市慢游", "月光留声"];
   const sampleFiles = ["evening", "city", "moon"];
   return (
     <div
-      className={`app ${detailOpen ? "detail-is-open" : ""}`}
+      className={`app ${detailOpen ? "detail-is-open is-listening" : ""}`}
+      style={
+        { "--listening-cover": m.current?.cover ? `url("${m.current.cover}")` : "none" } as React.CSSProperties
+      }
       onDragOver={(e) => {
         e.preventDefault();
         if (e.dataTransfer.types.includes("Files")) setDragging(true);
@@ -147,6 +151,7 @@ export default function App() {
           void m.importFiles(e.dataTransfer.files);
       }}
     >
+      <div className="listening-ambience" key={m.current?.cover ?? "empty"} aria-hidden="true" />
       <input
         ref={input}
         hidden
@@ -268,6 +273,17 @@ export default function App() {
       </aside>
       <main className="app-main">
         <header className="topbar">
+          {detailOpen && (
+            <div className="listening-toolbar">
+              <button className="listening-back" onClick={() => setPlayerView(false)} aria-label="返回音乐库">
+                <ChevronDown size={21} strokeWidth={1.7} /><span>音乐库</span>
+              </button>
+              <span className="listening-label">正在播放</span>
+              <button className="listening-queue" aria-label="查看播放队列" onClick={() => setQueueOpen(true)}>
+                <ListMusic size={21} strokeWidth={1.7} />
+              </button>
+            </div>
+          )}
           <button
             className="mobile-home"
             aria-label="返回播放器首页"
@@ -347,63 +363,11 @@ export default function App() {
                 className="collection-header section-enter"
                 key={`header-${view}`}
               >
-                <div
-                  className={`collection-art ${view === "favorites" ? "heart-art" : ""}`}
-                >
-                  {view === "favorites" ? (
-                    <Heart size={60} fill="currentColor" strokeWidth={0} />
-                  ) : playlist ? (
-                    <ListMusic size={62} strokeWidth={1.2} />
-                  ) : view === "local" ? (
-                    <FolderOpen size={61} strokeWidth={1.2} />
-                  ) : view === "remote" ? (
-                    <Link2 size={60} strokeWidth={1.2} />
-                  ) : view === "recent" ? (
-                    <Clock3 size={60} strokeWidth={1.2} />
-                  ) : (
-                    <AudioLines size={66} strokeWidth={1.3} />
-                  )}
-                  <span>
-                    {view === "favorites"
-                      ? "MY FAVORITES"
-                      : playlist
-                        ? "MY PLAYLIST"
-                        : "MY COLLECTION"}
-                  </span>
-                  <div className="art-grain" />
-                </div>
                 <div className="collection-copy">
-                  <div className="collection-kicker">
-                    <span>{playlist ? "歌单" : "音乐库"}</span>
-                    <small>YOUR MUSIC, YOUR WAY</small>
-                  </div>
                   <h1>{title}</h1>
-                  <p>
-                    {view === "favorites"
-                      ? "把喜欢的旋律，留在身边"
-                      : view === "recent"
-                        ? "听过的好音乐，再听一次"
-                        : view === "local"
-                          ? "来自你的电脑，属于你的收藏"
-                          : view === "remote"
-                            ? "通过音频直链，连接远方的声音"
-                            : playlist
-                              ? "用音乐记录每一个时刻"
-                              : "你的本地收藏与远端旋律，都在这里"}
+                  <p className="library-summary">
+                    {selected.length} 首歌曲 · {new Set(selected.map((t) => t.album || "未知专辑")).size} 张专辑
                   </p>
-                  <div className="collection-meta">
-                    <span className="user-avatar">
-                      <Headphones size={13} />
-                    </span>
-                    <strong>我的音乐空间</strong>
-                    <span className="meta-dot" />
-                    <span>{selected.length} 首歌曲</span>
-                    <span className="meta-dot" />
-                    <span>
-                      {new Set(selected.map((t) => t.album || "未知专辑")).size}{" "}
-                      张专辑
-                    </span>
-                  </div>
                 </div>
               </div>
               <div className="action-bar">
@@ -633,12 +597,14 @@ export default function App() {
               onImport={importClick}
               onRemote={() => setRemoteOpen(true)}
               onSample={() => m.addSample(0)}
+              onControlsHost={setControlsHost}
             />
           </div>
         </div>
       </main>
       <PlayerBar
         music={m}
+        listeningHost={detailOpen ? controlsHost : null}
         openDetail={() => setPlayerView(true)}
         queueOpen={queueOpen}
         openQueue={() => setQueueOpen(!queueOpen)}

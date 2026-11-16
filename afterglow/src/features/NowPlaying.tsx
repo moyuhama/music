@@ -17,6 +17,7 @@ interface Props {
   onImport(): void;
   onRemote(): void;
   onSample(): void;
+  onControlsHost(node: HTMLDivElement | null): void;
 }
 export default function NowPlaying({
   active,
@@ -25,6 +26,7 @@ export default function NowPlaying({
   onImport,
   onRemote,
   onSample,
+  onControlsHost,
 }: Props) {
   const track = m.current;
   const currentLine = activeLine(track?.lyrics ?? [], m.state.time);
@@ -45,24 +47,14 @@ export default function NowPlaying({
   }, [onClose, active]);
   return (
     <section
-      className={`now-page ${track?.cover ? "has-cover" : ""} ${track && !track.lyrics?.length ? "without-lyrics" : ""}`}
+      className={`now-page ${track && !track.lyrics?.length ? "without-lyrics" : ""}`}
       aria-label="播放首页"
     >
-      <div
-        key={track?.cover ?? "no-cover"}
-        aria-hidden="true"
-        className="now-backdrop"
-        style={
-          track?.cover
-            ? { backgroundImage: `url("${track.cover}")` }
-            : undefined
-        }
-      />
       <div className={`listening-layout ${!track ? "no-track" : ""}`}>
         <div className="record-side">
           <button
             className="large-artwork section-enter"
-            key={track?.id ?? "empty"}
+            key={`artwork-${track?.id ?? "empty"}`}
             type="button"
             aria-label="收起播放器"
             title="返回音乐库"
@@ -82,34 +74,18 @@ export default function NowPlaying({
               </div>
             )}
           </button>
-          {!track && (
-            <div className="record-actions">
-              <button
-                className="glass-button"
-                onClick={onSample}
-                disabled={!m.ready}
-              >
-                <Play size={14} />
-                听一段原创试听
-              </button>
-            </div>
-          )}
-        </div>
-        <div className="lyrics-side">
-          <div className="song-heading" key={track?.id ?? "empty"}>
+          <div className="song-heading">
             <span className="listening-eyebrow">
               {track ? "NOW PLAYING" : "WELCOME TO AFTERGLOW"}
             </span>
             <h1>{track?.title ?? "音乐，从这里开始"}</h1>
             {track ? (
-              <p>
-                <span>歌手</span>
-                {track.artist}
-                <span>专辑</span>
-                {track.album || "未知专辑"}
-              </p>
+              <>
+                <p className="song-artist">{track.artist}</p>
+                {track.album && <p className="song-album">{track.album}</p>}
+              </>
             ) : (
-              <p>本地的收藏，远端的旋律，在这里播放。</p>
+              <p className="song-artist">本地的收藏，远端的旋律。</p>
             )}
           </div>
           {track?.attribution && (
@@ -119,7 +95,7 @@ export default function NowPlaying({
                 target="_blank"
                 rel="noreferrer"
               >
-                {track.title} — {track.artist}
+                曲目来源
               </a>
               <span>·</span>
               <a
@@ -131,7 +107,17 @@ export default function NowPlaying({
               </a>
             </div>
           )}
-          {track?.lyrics?.length ? (
+          {track && <div className="listening-controls-host" ref={onControlsHost} />}
+          {!track && (
+            <div className="player-welcome">
+              <button onClick={onImport} className="welcome-primary" disabled={!m.ready || m.importing}><Plus size={18} />导入本地音乐</button>
+              <button onClick={onRemote} className="welcome-secondary" disabled={!m.ready}><Link2 size={17} />添加远端链接</button>
+              <button className="welcome-sample" onClick={onSample} disabled={!m.ready}><Play size={14} />听一段原创试听</button>
+            </div>
+          )}
+        </div>
+        {track?.lyrics?.length ? (
+          <div className="lyrics-side">
             <div className={`lyric-reader ${browsing ? "is-browsing" : ""}`}>
               <div
                 className="lyrics-scroll"
@@ -170,51 +156,8 @@ export default function NowPlaying({
                 回到当前歌词
               </button>
             </div>
-          ) : track ? null : (
-            <div className="player-welcome">
-              <button
-                onClick={onImport}
-                className="welcome-primary"
-                disabled={!m.ready || m.importing}
-              >
-                <Plus size={18} />
-                导入本地音乐
-              </button>
-              <button
-                onClick={onRemote}
-                className="welcome-secondary"
-                disabled={!m.ready}
-              >
-                <Link2 size={17} />
-                添加远端链接
-              </button>
-              <p>也可以把音频文件拖到这个窗口</p>
-              <small>MP3 / FLAC / WAV / M4A</small>
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="listening-footer">
-        <span
-          className={
-            m.state.status === "playing" ? "live-dots playing" : "live-dots"
-          }
-        >
-          <i />
-          <i />
-          <i />
-          <i />
-        </span>
-        <span>
-          {track
-            ? m.state.status === "playing"
-              ? "享受此刻的音乐"
-              : m.state.status === "loading"
-                ? "正在载入音乐…"
-                : "点击下方播放，继续聆听"
-            : "你的私人聆听空间"}
-        </span>
-        <span className="keyboard-hint">SPACE 播放 / 暂停</span>
+          </div>
+        ) : null}
       </div>
     </section>
   );

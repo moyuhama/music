@@ -445,25 +445,6 @@ input[type="range"]::-moz-range-thumb {
 .now-backdrop {
   display: none;
 }
-.now-page.has-cover .now-backdrop {
-  display: block;
-  inset: -50px;
-  filter: blur(64px);
-  transform: scale(1.12);
-  opacity: 0.8;
-  animation: artwork-background-in 450ms ease-out;
-}
-.now-page.has-cover:after {
-  display: block;
-  background: linear-gradient(180deg, rgb(255 255 255 / 68%), rgb(255 255 255 / 78%));
-}
-@keyframes artwork-background-in {
-  from { opacity: 0; }
-  to { opacity: 0.8; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .now-page.has-cover .now-backdrop { animation: none; }
-}
 .now-brand {
   color: #333;
 }
