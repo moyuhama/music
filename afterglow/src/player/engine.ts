@@ -1,5 +1,5 @@
 import type { Track } from "../domain/types";
-import { providers } from "../sources";
+import { providers } from "../sources/index.ts";
 export interface PlayerState {
   trackId: string | null;
   status: "idle" | "loading" | "playing" | "paused" | "ended" | "error";
@@ -7,6 +7,7 @@ export interface PlayerState {
   duration: number;
   volume: number;
   error: string;
+  seekVersion: number;
 }
 export class PlayerEngine {
   private audio = new Audio();
@@ -14,6 +15,7 @@ export class PlayerEngine {
   private source?: { release(): void };
   private controller?: AbortController;
   private revision = 0;
+  private pendingSeek: number | null = null;
   private state: PlayerState = {
     trackId: null,
     status: "idle",
@@ -21,6 +23,7 @@ export class PlayerEngine {
     duration: 0,
     volume: 0.7,
     error: "",
+    seekVersion: 0,
   };
   onEnded?: () => void;
   constructor() {
@@ -33,6 +36,16 @@ export class PlayerEngine {
           ? this.audio.duration
           : 0,
       });
+    this.audio.addEventListener("loadedmetadata", () => {
+      if (this.pendingSeek !== null) {
+        const time = this.pendingSeek;
+        this.pendingSeek = null;
+        this.audio.currentTime = Number.isFinite(this.audio.duration)
+          ? Math.min(time, this.audio.duration)
+          : time;
+      }
+      updateTime();
+    });
     this.audio.addEventListener("timeupdate", updateTime);
     this.audio.addEventListener("durationchange", updateTime);
     this.audio.addEventListener("playing", () =>
@@ -68,11 +81,12 @@ export class PlayerEngine {
     this.state = { ...this.state, ...patch };
     this.listeners.forEach((fn) => fn());
   }
-  async play(track: Track) {
+  async play(track: Track, startTime = 0) {
     this.controller?.abort();
     const controller = new AbortController();
     this.controller = controller;
     const revision = ++this.revision;
+    this.pendingSeek = null;
     this.audio.pause();
     this.audio.removeAttribute("src");
     this.audio.load();
@@ -81,9 +95,10 @@ export class PlayerEngine {
     this.update({
       trackId: track.id,
       status: "loading",
-      time: 0,
+      time: Math.max(0, startTime),
       duration: 0,
       error: "",
+      seekVersion: this.state.seekVersion + 1,
     });
     try {
       const source = await providers[track.source.kind].resolve(
@@ -95,6 +110,7 @@ export class PlayerEngine {
         return;
       }
       this.source = source;
+      this.pendingSeek = startTime > 0 ? startTime : null;
       this.audio.src = source.url;
       await this.audio.play();
     } catch (e) {
@@ -142,10 +158,14 @@ export class PlayerEngine {
     }
   }
   seek(time: number) {
-    if (Number.isFinite(time) && this.state.duration > 0) {
-      this.audio.currentTime = Math.max(0, Math.min(time, this.state.duration));
-      this.update({ time: this.audio.currentTime });
-    }
+    if (!Number.isFinite(time) || !this.state.trackId) return;
+    const target = Math.max(
+      0,
+      this.state.duration > 0 ? Math.min(time, this.state.duration) : time,
+    );
+    if (this.audio.readyState === 0) this.pendingSeek = target;
+    else this.audio.currentTime = target;
+    this.update({ time: target, seekVersion: this.state.seekVersion + 1 });
   }
   setVolume(volume: number) {
     const safe = Math.max(0, Math.min(1, volume));
@@ -155,6 +175,7 @@ export class PlayerEngine {
   stop() {
     ++this.revision;
     this.controller?.abort();
+    this.pendingSeek = null;
     this.audio.pause();
     this.audio.removeAttribute("src");
     this.audio.load();

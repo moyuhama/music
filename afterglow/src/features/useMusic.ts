@@ -108,6 +108,21 @@ export function useMusic() {
     updateTrack(track.id, { lastPlayed: Date.now() });
     void player.play(track);
   }
+  function seek(time: number) {
+    if (!current || !Number.isFinite(time)) return;
+    if (!available(current)) {
+      notify("请先重新导入此本地文件。");
+      return;
+    }
+    if (player.hasSource()) player.seek(time);
+    else {
+      if (!queue.includes(current.id)) setQueue((old) => [...old, current.id]);
+      void player.play(
+        current,
+        Math.max(0, current.duration ? Math.min(time, current.duration) : time),
+      );
+    }
+  }
   function next(ended = false) {
     const id = nextId(ids, state.trackId, mode, ended);
     const track = tracks.find((t) => t.id === id);
@@ -407,6 +422,7 @@ export function useMusic() {
     clearQueue,
     addSample,
     updateTrack,
+    seek,
   };
 }
 export type MusicController = ReturnType<typeof useMusic>;

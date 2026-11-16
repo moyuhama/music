@@ -29,6 +29,11 @@ import { useMusic } from "./features/useMusic";
 import Cover from "./components/Cover";
 import RemoteDialog from "./features/RemoteDialog";
 import PlayerBar from "./features/PlayerBar";
+import {
+  transitionPlayer,
+  cancelPlayerTransition,
+} from "./interactions/playerTransition";
+import { useScrollMemory } from "./interactions/useScrollMemory";
 import MobileNavigation from "./features/MobileNavigation";
 import NowPlaying from "./features/NowPlaying";
 import TrackList from "./features/TrackList";
@@ -61,6 +66,22 @@ export default function App() {
       document.body.style.overflow = previous;
     };
   }, []);
+  const libraryScroll = useScrollMemory(
+    JSON.stringify([view, query, layout, albumFilter, sort]),
+    !detailOpen,
+  );
+  function setPlayerView(expanded: boolean, updateLibrary?: () => void) {
+    if (expanded === detailOpen) {
+      cancelPlayerTransition();
+      updateLibrary?.();
+      return;
+    }
+    transitionPlayer(expanded, () => {
+      setDetailOpen(expanded);
+      updateLibrary?.();
+    });
+  }
+  useEffect(() => () => cancelPlayerTransition(), []);
   const input = useRef<HTMLInputElement>(null);
   const lyricsInput = useRef<HTMLInputElement>(null);
   const lyricTarget = useRef("");
@@ -105,11 +126,12 @@ export default function App() {
     lyricsInput.current?.click();
   };
   function changeView(value: View) {
-    setDetailOpen(false);
-    setView(value);
-    setAlbumFilter("");
-    setQuery("");
-    setLayout("songs");
+    setPlayerView(false, () => {
+      setView(value);
+      setAlbumFilter("");
+      setQuery("");
+      setLayout("songs");
+    });
   }
   const sampleNames = ["晚风来信", "城市慢游", "月光留声"];
   const sampleFiles = ["evening", "city", "moon"];
@@ -171,7 +193,7 @@ export default function App() {
           aria-label="余音首页"
           onClick={(e) => {
             e.preventDefault();
-            setDetailOpen(true);
+            setPlayerView(true);
           }}
         >
           <span className="brand-mark">
@@ -186,7 +208,7 @@ export default function App() {
           <button
             aria-label="播放器首页"
             className={`nav-item ${detailOpen ? "active" : ""}`}
-            onClick={() => setDetailOpen(true)}
+            onClick={() => setPlayerView(true)}
           >
             <AudioLines size={19} />
             <span>播放器</span>
@@ -266,7 +288,7 @@ export default function App() {
           <button
             className="mobile-home"
             aria-label="返回播放器首页"
-            onClick={() => setDetailOpen(true)}
+            onClick={() => setPlayerView(true)}
           >
             <AudioLines size={20} />
           </button>
@@ -289,7 +311,7 @@ export default function App() {
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
-                setDetailOpen(false);
+                setPlayerView(false);
               }}
             />
             {query ? (
@@ -323,7 +345,7 @@ export default function App() {
               volume={m.state.volume}
               onQueue={() => setQueueOpen(true)}
               onVolume={(value) => player.setVolume(value)}
-              onPlayer={() => setDetailOpen(true)}
+              onPlayer={() => setPlayerView(true)}
               onView={changeView}
               onCreate={() => setPlaylistOpen(true)}
             />
@@ -332,6 +354,8 @@ export default function App() {
         <div className="page-stack">
           <div
             className={`page-layer library-page ${!detailOpen ? "is-active" : ""}`}
+            ref={libraryScroll.ref}
+            onScroll={libraryScroll.onScroll}
             aria-hidden={detailOpen}
             inert={detailOpen}
           >
@@ -623,7 +647,7 @@ export default function App() {
             <NowPlaying
               active={detailOpen}
               music={m}
-              onClose={() => setDetailOpen(false)}
+              onClose={() => setPlayerView(false)}
               onLyrics={chooseLyrics}
               onImport={importClick}
               onRemote={() => setRemoteOpen(true)}
@@ -634,7 +658,7 @@ export default function App() {
       </main>
       <PlayerBar
         music={m}
-        openDetail={() => setDetailOpen(true)}
+        openDetail={() => setPlayerView(true)}
         queueOpen={queueOpen}
         openQueue={() => setQueueOpen(!queueOpen)}
       />

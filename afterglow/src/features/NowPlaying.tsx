@@ -1,17 +1,15 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import {
   Heart,
   FileMusic,
-  Music2,
-  Library,
-  AudioLines,
   Plus,
   Link2,
   Play,
   Disc3,
+  LocateFixed,
 } from "lucide-react";
 import { activeLine } from "../domain/lyrics";
-import { player } from "../player/engine";
+import { useLyricFollow } from "../interactions/useLyricFollow";
 import Cover from "../components/Cover";
 import type { MusicController } from "./useMusic";
 interface Props {
@@ -33,23 +31,15 @@ export default function NowPlaying({
   onSample,
 }: Props) {
   const track = m.current;
-  const scroller = useRef<HTMLDivElement>(null);
   const currentLine = activeLine(track?.lyrics ?? [], m.state.time);
-  const lineRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  useEffect(() => {
-    if (!active) return;
-    const line = lineRefs.current[currentLine];
-    if (line && scroller.current)
-      scroller.current.scrollTo({
-        top:
-          line.offsetTop -
-          scroller.current.clientHeight / 2 +
-          line.clientHeight / 2,
-        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "instant"
-          : "smooth",
-      });
-  }, [currentLine, track?.id, track?.lyrics, active]);
+  const { scroller, lineRefs, browsing, browse, resume, onKeyDown } =
+    useLyricFollow(
+      track?.id,
+      track?.lyrics,
+      currentLine,
+      m.state.seekVersion,
+      active,
+    );
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (active && e.key === "Escape") onClose();
@@ -72,19 +62,28 @@ export default function NowPlaying({
       />
       <div className={`listening-layout ${!track ? "no-track" : ""}`}>
         <div className="record-side">
-          <div
+          <button
             className="large-artwork section-enter"
             key={track?.id ?? "empty"}
+            type="button"
+            aria-label="收起播放器"
+            title="返回音乐库"
+            onClick={onClose}
           >
             {track ? (
-              <Cover src={track.cover} index={m.tracks.indexOf(track)} large />
+              <Cover
+                playerRole="full"
+                src={track.cover}
+                index={m.tracks.indexOf(track)}
+                large
+              />
             ) : (
               <div className="artwork-placeholder">
                 <Disc3 size={104} strokeWidth={0.6} />
                 <span>YOUR MUSIC STARTS HERE</span>
               </div>
             )}
-          </div>
+          </button>
           <div className="record-actions">
             {track ? (
               <>
@@ -155,20 +154,43 @@ export default function NowPlaying({
             </div>
           )}
           {track?.lyrics?.length ? (
-            <div className="lyrics-scroll" ref={scroller}>
-              {track.lyrics.map((line, i) => (
-                <button
-                  ref={(el) => {
-                    lineRefs.current[i] = el;
-                  }}
-                  key={`${line.time}-${i}`}
-                  className={`lyric-line ${i === currentLine ? "active" : ""}`}
-                  onClick={() => player.seek(line.time)}
-                  title="点击跳转到此句"
-                >
-                  {line.text}
-                </button>
-              ))}
+            <div className={`lyric-reader ${browsing ? "is-browsing" : ""}`}>
+              <div
+                className="lyrics-scroll"
+                ref={scroller}
+                onWheel={browse}
+                onTouchStart={browse}
+                onKeyDown={onKeyDown}
+                onFocusCapture={browse}
+                aria-label="同步歌词"
+              >
+                {track.lyrics.map((line, i) => (
+                  <button
+                    ref={(el) => {
+                      lineRefs.current[i] = el;
+                    }}
+                    key={`${line.time}-${i}`}
+                    className={`lyric-line ${i === currentLine ? "active" : ""}`}
+                    onClick={() => {
+                      m.seek(line.time);
+                      resume();
+                    }}
+                    title="点击跳转到此句"
+                  >
+                    {line.text}
+                  </button>
+                ))}
+              </div>
+              <button
+                className="follow-current"
+                aria-hidden={!browsing}
+                disabled={!browsing}
+                tabIndex={browsing ? 0 : -1}
+                onClick={resume}
+              >
+                <LocateFixed size={14} />
+                回到当前歌词
+              </button>
             </div>
           ) : track ? null : (
             <div className="player-welcome">

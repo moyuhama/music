@@ -44,7 +44,11 @@ export default function PlayerBar({
           onClick={openDetail}
         >
           {current ? (
-            <Cover src={current.cover} index={m.tracks.indexOf(current)} />
+            <Cover
+              playerRole="mini"
+              src={current.cover}
+              index={m.tracks.indexOf(current)}
+            />
           ) : (
             <div className="idle-cover">
               <AudioLines size={25} />
@@ -144,7 +148,7 @@ export default function PlayerBar({
             step="0.1"
             value={Math.min(state.time, state.duration || 1)}
             disabled={!state.duration}
-            onChange={(e) => player.seek(Number(e.target.value))}
+            onChange={(e) => m.seek(Number(e.target.value))}
             style={
               {
                 "--progress": `${state.duration ? (state.time / state.duration) * 100 : 0}%`,
