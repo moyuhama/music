@@ -1,0 +1,10 @@
+.DS_Store
+**/node_modules/
+**/dist/
+**/.runtime/
+**/.openai/
+**/*.tsbuildinfo
+**/docs/screenshots/
+.env
+.env.*
+!.env.example
