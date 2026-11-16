@@ -2,7 +2,7 @@
 
 简约白色的网页音乐播放器，支持本地文件、远端音频直链、同步 LRC 歌词、收藏、歌单和播放队列。
 
-**在线使用：https://moyuhama.github.io/afterglow-player/**
+**在线使用：https://moyuhama.github.io/music/**
 
 ## 本机使用
 
