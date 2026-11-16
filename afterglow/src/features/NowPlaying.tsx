@@ -45,10 +45,12 @@ export default function NowPlaying({
   }, [onClose, active]);
   return (
     <section
-      className={`now-page ${track && !track.lyrics?.length ? "without-lyrics" : ""}`}
+      className={`now-page ${track?.cover ? "has-cover" : ""} ${track && !track.lyrics?.length ? "without-lyrics" : ""}`}
       aria-label="播放首页"
     >
       <div
+        key={track?.cover ?? "no-cover"}
+        aria-hidden="true"
         className="now-backdrop"
         style={
           track?.cover
