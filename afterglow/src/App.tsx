@@ -11,7 +11,7 @@ import {
   Upload,
   Music2,
   Clock3,
-  ChevronDown,
+  ChevronLeft,
   ChevronRight,
   FolderOpen,
   ListMusic,
@@ -295,7 +295,7 @@ export default function App() {
           {detailOpen && (
             <div className="listening-toolbar">
               <div className="listening-window-actions">
-                <button className="listening-back" onClick={() => setPlayerView(false)} aria-label="返回音乐库" title="返回音乐库"><ChevronDown size={20} strokeWidth={1.7} /></button>
+                <button className="listening-back" onClick={() => setPlayerView(false)} aria-label="返回音乐库" title="返回音乐库"><ChevronLeft size={20} strokeWidth={1.7} /></button>
 
               </div>
               <button className="listening-queue" aria-label="查看播放队列" onClick={() => setQueueOpen(true)}>
