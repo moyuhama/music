@@ -75,47 +75,47 @@ export default function NowPlaying({
             )}
           </button>
           <div className="listening-details">
-          <div className="listening-metadata">
-            <span className="listening-eyebrow">
-              {track ? "NOW PLAYING" : "WELCOME TO AFTERGLOW"}
-            </span>
-            <h1>{track?.title ?? "音乐，从这里开始"}</h1>
-            {track ? (
-              <>
-                <p className="listening-artist">{track.artist}</p>
-                {track.album && <p className="listening-album">{track.album}</p>}
-              </>
-            ) : (
-              <p className="listening-artist">本地的收藏，远端的旋律。</p>
+            <div className="listening-metadata">
+              <span className="listening-eyebrow">
+                {track ? "NOW PLAYING" : "WELCOME TO AFTERGLOW"}
+              </span>
+              <h1>{track?.title ?? "音乐，从这里开始"}</h1>
+              {track ? (
+                <>
+                  <p className="listening-artist">{track.artist}</p>
+                  {track.album && <p className="listening-album">{track.album}</p>}
+                </>
+              ) : (
+                <p className="listening-artist">本地的收藏，远端的旋律。</p>
+              )}
+            </div>
+            {track?.attribution && (
+              <div className="listening-attribution">
+                <a
+                  href={track.attribution.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  曲目来源
+                </a>
+                <span>·</span>
+                <a
+                  href={track.attribution.licenseUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {track.attribution.license}
+                </a>
+              </div>
             )}
-          </div>
-          {track?.attribution && (
-            <div className="listening-attribution">
-              <a
-                href={track.attribution.sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                曲目来源
-              </a>
-              <span>·</span>
-              <a
-                href={track.attribution.licenseUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {track.attribution.license}
-              </a>
-            </div>
-          )}
-          {track && <div className="listening-controls-host" ref={onControlsHost} />}
-          {!track && (
-            <div className="listening-welcome">
-              <button onClick={onImport} className="welcome-primary" disabled={!m.ready || m.importing}><Plus size={18} />导入本地音乐</button>
-              <button onClick={onRemote} className="welcome-secondary" disabled={!m.ready}><Link2 size={17} />添加远端链接</button>
-              <button className="welcome-sample" onClick={onSample} disabled={!m.ready}><Play size={14} />听一段原创试听</button>
-            </div>
-          )}
+            {track && <div className="listening-controls-host" ref={onControlsHost} />}
+            {!track && (
+              <div className="listening-welcome">
+                <button onClick={onImport} className="welcome-primary" disabled={!m.ready || m.importing}><Plus size={18} />导入本地音乐</button>
+                <button onClick={onRemote} className="welcome-secondary" disabled={!m.ready}><Link2 size={17} />添加远端链接</button>
+                <button className="welcome-sample" onClick={onSample} disabled={!m.ready}><Play size={14} />听一段原创试听</button>
+              </div>
+            )}
           </div>
         </div>
         {track?.lyrics?.length ? (
