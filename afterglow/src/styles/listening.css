@@ -85,7 +85,7 @@
 .listening-ambience { display: none; }
 .is-listening .listening-ambience { display: block; position: absolute; inset: 0; z-index: -1; overflow: clip; pointer-events: none; background: linear-gradient(var(--cover-top), var(--cover-bottom)); }
 .is-listening .listening-ambience::before { content: ""; position: absolute; inset: -80px; background-image: var(--listening-cover); background-size: cover; background-position: center; opacity: .08; filter: blur(90px); mix-blend-mode: soft-light; }
-.soda-app.is-listening .sidebar { display: flex; inset: 0 auto var(--desktop-transport-height) 0; background: var(--cover-panel); }
+.soda-app.is-listening .sidebar { display: flex; inset: 0 auto var(--desktop-transport-height) 0; background: var(--cover-bar); }
 .soda-app.is-listening .app-main { background: transparent; overflow: clip; }
 .soda-app.is-listening .page-layer { background: transparent; }
 .soda-app.is-listening .topbar { display: flex; align-items: center; gap: 12px; background: transparent; }
@@ -303,3 +303,46 @@
 .soda-app .mobile-navigation > .icon-button[aria-expanded="true"] { background: #ffffff12; color: #eee; }
 .soda-app .mobile-volume > input { background: #ffffff30; }
 .soda-app .mobile-volume > input::-webkit-slider-thumb { background: #ddd; }
+
+/* Soda's player is a sheet over the library, not a transition of the whole app. */
+.soda-app .app-main,
+.soda-app.is-listening .app-main { position: relative; background: #121212; }
+.soda-app .library-page {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: none;
+}
+.soda-app .player-page,
+.soda-app.is-listening .player-page {
+  z-index: 2;
+  opacity: 1;
+  visibility: hidden;
+  transform: translateY(100%);
+  background: linear-gradient(var(--cover-top), var(--cover-bottom));
+  transition: transform 360ms cubic-bezier(.25, .65, .3, 1), visibility 0s linear 360ms;
+}
+.soda-app .player-page::before {
+  content: "";
+  position: absolute;
+  inset: -80px;
+  background-image: var(--listening-cover);
+  background-size: cover;
+  background-position: center;
+  opacity: .08;
+  filter: blur(90px);
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+.soda-app .player-page.is-active {
+  visibility: visible;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+.soda-app .player-page .listening-screen { top: 64px; }
+@media (max-width: 820px) {
+  .soda-app .player-page .listening-screen { top: 56px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .soda-app .player-page { transition: none; }
+}

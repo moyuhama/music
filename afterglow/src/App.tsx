@@ -29,10 +29,6 @@ import { useMusic } from "./features/useMusic";
 import Cover from "./components/Cover";
 import RemoteDialog from "./features/RemoteDialog";
 import PlayerBar from "./features/PlayerBar";
-import {
-  transitionPlayer,
-  cancelPlayerTransition,
-} from "./interactions/playerTransition";
 import { useScrollMemory } from "./interactions/useScrollMemory";
 import MobileNavigation from "./features/MobileNavigation";
 import NowPlaying from "./features/NowPlaying";
@@ -75,17 +71,9 @@ export default function App() {
     !detailOpen,
   );
   function setPlayerView(expanded: boolean, updateLibrary?: () => void) {
-    if (expanded === detailOpen) {
-      cancelPlayerTransition();
-      updateLibrary?.();
-      return;
-    }
-    transitionPlayer(expanded, () => {
-      setDetailOpen(expanded);
-      updateLibrary?.();
-    });
+    setDetailOpen(expanded);
+    updateLibrary?.();
   }
-  useEffect(() => () => cancelPlayerTransition(), []);
   const input = useRef<HTMLInputElement>(null);
   const directoryInput = useRef<HTMLInputElement>(null);
   const playlist = view.startsWith("playlist:")
@@ -604,6 +592,7 @@ export default function App() {
               </footer>
             </section>}
           </div>
+        </div>
           <div
             className={`page-layer player-page ${detailOpen ? "is-active" : ""}`}
             aria-hidden={!detailOpen}
@@ -619,7 +608,6 @@ export default function App() {
               onControlsHost={setControlsHost}
             />
           </div>
-        </div>
       </main>
       <div className="listening-desktop-controls" ref={setDesktopControlsHost} />
       <PlayerBar
