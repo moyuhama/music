@@ -128,6 +128,15 @@ export default function App() {
     });
   }
   const [controlsHost, setControlsHost] = useState<HTMLDivElement | null>(null);
+  const [desktopControlsHost, setDesktopControlsHost] = useState<HTMLDivElement | null>(null);
+  const [isDesktop, setIsDesktop] = useState(() => matchMedia("(min-width: 821px)").matches);
+  useEffect(() => {
+    const media = matchMedia("(min-width: 821px)");
+    const update = () => setIsDesktop(media.matches);
+    media.addEventListener("change", update);
+    update();
+    return () => media.removeEventListener("change", update);
+  }, []);
   const sampleNames = ["晚风来信", "城市慢游", "月光留声"];
   const sampleFiles = ["evening", "city", "moon"];
   return (
@@ -602,9 +611,10 @@ export default function App() {
           </div>
         </div>
       </main>
+      <div className="listening-desktop-controls" ref={setDesktopControlsHost} />
       <PlayerBar
         music={m}
-        listeningHost={detailOpen ? controlsHost : null}
+        listeningHost={detailOpen ? (isDesktop ? desktopControlsHost : controlsHost) : null}
         openDetail={() => setPlayerView(true)}
         queueOpen={queueOpen}
         openQueue={() => setQueueOpen(!queueOpen)}

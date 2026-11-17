@@ -259,3 +259,34 @@
 .library-page .action-bar { margin-top: 26px; }
 .library-page .track-title { font-size: 13px; }
 @media (max-width: 600px) { .library-page .collection-copy h1 { font-size: 27px; } }
+/* Desktop transport belongs to the viewport footer; H5 keeps it with the artwork. */
+.listening-desktop-controls { display: none; }
+@media (min-width: 821px) {
+  .app.is-listening { --desktop-transport-height: 140px; }
+  .is-listening .app-main { height: calc(100dvh - var(--desktop-transport-height)); }
+  .is-listening .listening-desktop-controls {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 12;
+    height: var(--desktop-transport-height);
+    padding: 12px 32px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(transparent, #ffffff18);
+  }
+  .listening-desktop-controls > .listening-controls { width: min(100%, 600px); }
+  .is-listening .listening-controls-host,
+  .is-listening .without-lyrics .listening-controls-host { margin-top: 0; }
+  .is-listening .listening-composition {
+    grid-template-columns: minmax(0, min(350px, calc(100dvh - 360px))) minmax(0, 440px);
+  }
+  .is-listening .without-lyrics .listening-record {
+    grid-template-columns: minmax(0, min(440px, calc(100dvh - 240px))) minmax(0, 340px);
+    justify-content: center;
+  }
+}
+@media (min-width: 821px) and (max-height: 650px) {
+  .app.is-listening { --desktop-transport-height: 118px; }
+  .is-listening .listening-desktop-controls { padding-top: 10px; padding-bottom: 16px; }
+}
