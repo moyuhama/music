@@ -77,10 +77,10 @@ export default function PlayerBar({
         </div>
 
       </div>}
-      <div className="playback-center">
-        <div className="playback-buttons">
+      <div className={listeningHost ? "transport-center" : "playback-center"}>
+        <div className={listeningHost ? "transport-buttons" : "playback-buttons"}>
           <button
-            className={`icon-button mode-button ${(listeningHost ? m.mode === "repeat-one" : m.mode !== "sequence") ? "on" : ""}`}
+            className={`${listeningHost ? "transport-icon transport-repeat" : "icon-button mode-button"} ${(listeningHost ? m.mode === "repeat-one" : m.mode !== "sequence") ? "on" : ""}`}
             aria-label={listeningHost ? `单曲循环：${repeating ? "开启" : "关闭"}` : `播放模式：${modeName}，点击切换`}
             onClick={cycleMode}
           >
@@ -93,7 +93,7 @@ export default function PlayerBar({
             )}
           </button>
           <button
-            className="icon-button"
+            className={listeningHost ? "transport-icon" : "icon-button"}
             aria-label="上一首"
             disabled={!m.queue.length}
             onClick={m.previous}
@@ -101,7 +101,7 @@ export default function PlayerBar({
             <SkipBack size={20} fill="currentColor" />
           </button>
           <button
-            className="play-main"
+            className={listeningHost ? "transport-toggle" : "play-main"}
             aria-label={playing || loading ? "暂停" : "播放"}
             onClick={m.toggle}
           >
@@ -114,7 +114,7 @@ export default function PlayerBar({
             )}
           </button>
           <button
-            className="icon-button"
+            className={listeningHost ? "transport-icon" : "icon-button"}
             aria-label="下一首"
             disabled={!m.queue.length}
             onClick={() => m.next()}
@@ -123,7 +123,7 @@ export default function PlayerBar({
           </button>
           {listeningHost && (
             <button
-              className={`icon-button shuffle-button ${m.mode === "shuffle" ? "on" : ""}`}
+              className={`transport-icon transport-shuffle ${m.mode === "shuffle" ? "on" : ""}`}
               aria-label={`随机播放：${m.mode === "shuffle" ? "开启" : "关闭"}`}
               onClick={() => m.setMode(m.mode === "shuffle" ? "sequence" : "shuffle")}
             >
@@ -139,7 +139,7 @@ export default function PlayerBar({
             词
           </button> : null}
         </div>
-        <div className="progress-row">
+        <div className={listeningHost ? "transport-progress" : "progress-row"}>
           <span>{formatTime(state.time)}</span>
           <input
             aria-label="播放进度"

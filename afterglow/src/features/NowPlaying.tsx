@@ -47,13 +47,13 @@ export default function NowPlaying({
   }, [onClose, active]);
   return (
     <section
-      className={`now-page ${track && !track.lyrics?.length ? "without-lyrics" : ""}`}
+      className={`listening-screen ${track && !track.lyrics?.length ? "without-lyrics" : ""}`}
       aria-label="播放首页"
     >
-      <div className={`listening-layout ${!track ? "no-track" : ""}`}>
-        <div className="record-side">
+      <div className={`listening-composition ${!track ? "no-track" : ""}`}>
+        <div className="listening-record">
           <button
-            className="large-artwork section-enter"
+            className="listening-artwork"
             key={`artwork-${track?.id ?? "empty"}`}
             type="button"
             aria-label="收起播放器"
@@ -74,22 +74,23 @@ export default function NowPlaying({
               </div>
             )}
           </button>
-          <div className="song-heading">
+          <div className="listening-details">
+          <div className="listening-metadata">
             <span className="listening-eyebrow">
               {track ? "NOW PLAYING" : "WELCOME TO AFTERGLOW"}
             </span>
             <h1>{track?.title ?? "音乐，从这里开始"}</h1>
             {track ? (
               <>
-                <p className="song-artist">{track.artist}</p>
-                {track.album && <p className="song-album">{track.album}</p>}
+                <p className="listening-artist">{track.artist}</p>
+                {track.album && <p className="listening-album">{track.album}</p>}
               </>
             ) : (
-              <p className="song-artist">本地的收藏，远端的旋律。</p>
+              <p className="listening-artist">本地的收藏，远端的旋律。</p>
             )}
           </div>
           {track?.attribution && (
-            <div className="track-attribution">
+            <div className="listening-attribution">
               <a
                 href={track.attribution.sourceUrl}
                 target="_blank"
@@ -109,18 +110,19 @@ export default function NowPlaying({
           )}
           {track && <div className="listening-controls-host" ref={onControlsHost} />}
           {!track && (
-            <div className="player-welcome">
+            <div className="listening-welcome">
               <button onClick={onImport} className="welcome-primary" disabled={!m.ready || m.importing}><Plus size={18} />导入本地音乐</button>
               <button onClick={onRemote} className="welcome-secondary" disabled={!m.ready}><Link2 size={17} />添加远端链接</button>
               <button className="welcome-sample" onClick={onSample} disabled={!m.ready}><Play size={14} />听一段原创试听</button>
             </div>
           )}
+          </div>
         </div>
         {track?.lyrics?.length ? (
-          <div className="lyrics-side">
-            <div className={`lyric-reader ${browsing ? "is-browsing" : ""}`}>
+          <div className="listening-lyrics">
+            <div className={`listening-lyric-reader ${browsing ? "is-browsing" : ""}`}>
               <div
-                className="lyrics-scroll"
+                className="listening-lyric-scroll"
                 ref={scroller}
                 onWheel={browse}
                 onTouchStart={browse}
@@ -134,7 +136,7 @@ export default function NowPlaying({
                       lineRefs.current[i] = el;
                     }}
                     key={`${line.time}-${i}`}
-                    className={`lyric-line ${i === currentLine ? "active" : ""}`}
+                    className={`listening-lyric-line ${i === currentLine ? "active" : ""}`}
                     onClick={() => {
                       m.seek(line.time);
                       resume();
@@ -146,7 +148,7 @@ export default function NowPlaying({
                 ))}
               </div>
               <button
-                className="follow-current"
+                className="listening-follow"
                 aria-hidden={!browsing}
                 disabled={!browsing}
                 tabIndex={browsing ? 0 : -1}
