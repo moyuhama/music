@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Menu,
+  Compass,
   X,
   AudioLines,
   Library,
@@ -56,6 +57,7 @@ export default function MobileNavigation({
     };
   }, [open]);
   const items = [
+    { view: "modes" as const, name: "听歌模式", Icon: Compass },
     { view: "all" as const, name: "全部音乐", Icon: Library },
     { view: "favorites" as const, name: "我喜欢的音乐", Icon: Heart },
     { view: "recent" as const, name: "最近播放", Icon: Clock3 },

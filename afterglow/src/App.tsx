@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   AudioLines,
+  Compass,
   Library,
   Heart,
   Link2,
@@ -11,7 +12,6 @@ import {
   Music2,
   Clock3,
   ChevronLeft,
-  ChevronDown,
   ChevronRight,
   FolderOpen,
   ListMusic,
@@ -36,10 +36,13 @@ import {
 import { useScrollMemory } from "./interactions/useScrollMemory";
 import MobileNavigation from "./features/MobileNavigation";
 import NowPlaying from "./features/NowPlaying";
+import ListeningModes from "./features/ListeningModes";
+import { useCoverPalette } from "./features/useCoverPalette";
 import TrackList from "./features/TrackList";
 import QueuePanel from "./features/QueuePanel";
 import { PlaylistDialog, EditTrackDialog } from "./features/LibraryDialogs";
 const viewNames = {
+  modes: "听歌模式",
   all: "全部音乐",
   favorites: "我喜欢的音乐",
   local: "本地音乐",
@@ -48,6 +51,7 @@ const viewNames = {
 };
 export default function App() {
   const m = useMusic();
+  const palette = useCoverPalette(m.current?.cover);
   const [view, setView] = useState<View>("all");
   const [query, setQuery] = useState("");
   const [layout, setLayout] = useState<"songs" | "albums">("songs");
@@ -141,9 +145,13 @@ export default function App() {
   const sampleFiles = ["evening", "city", "moon"];
   return (
     <div
-      className={`app ${detailOpen ? "detail-is-open is-listening" : ""}`}
+      className={`app soda-app ${detailOpen ? "detail-is-open is-listening" : ""}`}
       style={
-        { "--listening-cover": m.current?.cover ? `url("${m.current.cover}")` : "none" } as React.CSSProperties
+        {
+          "--listening-cover": m.current?.cover ? `url("${m.current.cover}")` : "none",
+          "--cover-top": palette.top, "--cover-bottom": palette.bottom,
+          "--cover-panel": palette.panel, "--cover-bar": palette.bar,
+        } as React.CSSProperties
       }
       onDragOver={(e) => {
         e.preventDefault();
@@ -208,12 +216,14 @@ export default function App() {
             onClick={() => setPlayerView(true)}
           >
             <AudioLines size={19} />
-            <span>播放器</span>
+            <span>正在播放</span>
           </button>
-          {(["all", "favorites", "recent", "local", "remote"] as const).map(
+          {(["modes", "all", "favorites", "recent", "local", "remote"] as const).map(
             (v) => {
               const Icon =
-                v === "all"
+                v === "modes"
+                  ? Compass
+                  : v === "all"
                   ? Library
                   : v === "favorites"
                     ? Heart
@@ -284,10 +294,10 @@ export default function App() {
         <header className="topbar">
           {detailOpen && (
             <div className="listening-toolbar">
-              <button className="listening-back" onClick={() => setPlayerView(false)} aria-label="返回音乐库">
-                <ChevronDown size={21} strokeWidth={1.7} /><span>音乐库</span>
-              </button>
-              <span className="listening-label">正在播放</span>
+              <div className="listening-window-actions">
+                <button className="listening-back" onClick={() => setPlayerView(false)} aria-label="返回音乐库" title="返回音乐库"><ChevronLeft size={20} strokeWidth={1.7} /></button>
+
+              </div>
               <button className="listening-queue" aria-label="查看播放队列" onClick={() => setQueueOpen(true)}>
                 <ListMusic size={21} strokeWidth={1.7} />
               </button>
@@ -367,7 +377,7 @@ export default function App() {
             aria-hidden={detailOpen}
             inert={detailOpen}
           >
-            <section className="content">
+            {view === "modes" ? <ListeningModes music={m} onPlay={() => setPlayerView(true)} /> : <section className="content">
               <div
                 className="collection-header section-enter"
                 key={`header-${view}`}
@@ -592,7 +602,7 @@ export default function App() {
                 </span>
                 <span>支持 MP3 / FLAC / WAV / M4A 等格式</span>
               </footer>
-            </section>
+            </section>}
           </div>
           <div
             className={`page-layer player-page ${detailOpen ? "is-active" : ""}`}

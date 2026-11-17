@@ -34,6 +34,7 @@ export interface Playlist {
 }
 export type PlayMode = "sequence" | "repeat-one" | "shuffle";
 export type View =
+  | "modes"
   | "all"
   | "favorites"
   | "local"

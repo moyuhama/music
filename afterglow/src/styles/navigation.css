@@ -406,6 +406,69 @@ body,
 .mobile-navigation {
   display: none;
 }
+.mobile-navigation {
+  position: relative;
+  flex-shrink: 0;
+}
+.topbar-tools .mobile-navigation > .icon-button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+}
+/* The menu is used by desktop listening mode as well as H5. */
+.mobile-navigation-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  display: block;
+  width: 260px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 88px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #e5e8ee;
+  border-radius: 12px;
+  padding: 9px;
+  background: #f8f9fc;
+  color: #454c59;
+  line-height: 1.4;
+  box-shadow: 0 12px 35px #00000025;
+  z-index: 40;
+  animation: dialog-in 160ms ease both;
+}
+.mobile-menu-label {
+  display: block;
+  color: #8b93a1;
+  font-size: 10px;
+  padding: 9px 11px;
+  white-space: nowrap;
+}
+.mobile-navigation-panel > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 42px;
+  padding: 11px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #545d6c;
+  border-radius: 7px;
+  text-align: left;
+}
+.mobile-navigation-panel > button > svg { flex-shrink: 0; width: 17px; height: 17px; }
+.mobile-navigation-panel > button > span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mobile-navigation-panel > button > small { color: #8c95a5; font-size: 10px; }
+.mobile-navigation-panel > button:hover { background: #e9edf4; }
+.mobile-navigation-panel > button.selected { background: #e6ebf4; color: #29354c; }
+.mobile-menu-divider { height: 1px; background: #e3e7ee; margin: 7px 9px; }
+.mobile-volume { display: flex; align-items: center; gap: 12px; padding: 13px 11px; color: #545d6c; font-size: 12px; }
+.mobile-volume > svg { flex-shrink: 0; width: 17px; height: 17px; }
+.mobile-volume > span { white-space: nowrap; }
+.mobile-volume > input { flex: 1; min-width: 0; margin-left: 1px; height: 3px; }
 @media (max-width: 820px) {
   :root {
     --sidebar: 0px;
@@ -447,67 +510,7 @@ body,
     border: 0;
     padding-left: 0;
   }
-  .mobile-navigation {
-    display: block;
-    position: relative;
-  }
-  .mobile-navigation > .icon-button {
-    color: #666;
-    padding: 5px;
-  }
-  .mobile-navigation-panel {
-    position: absolute;
-    right: 0;
-    top: 42px;
-    width: 230px;
-    max-height: calc(100dvh - var(--bar) - 90px);
-    overflow-y: auto;
-    border: 1px solid #e7e7e7;
-    border-radius: 10px;
-    padding: 9px;
-    gap: 0;
-    background: #fff;
-    box-shadow: 0 12px 35px #00000010;
-    display: block;
-    z-index: 25;
-    animation: dialog-in 160ms ease both;
-  }
-  .mobile-menu-label {
-    display: block;
-    color: #aaa;
-    font-size: 10px;
-    padding: 9px 11px;
-  }
-  .mobile-navigation-panel > button {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    padding: 12px 11px;
-    font-size: 12px;
-    color: #777;
-    border-radius: 6px;
-    text-align: left;
-  }
-  .mobile-navigation-panel > button > span {
-    flex: 1;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .mobile-navigation-panel > button:hover {
-    background: #f6f6f6;
-  }
-  .mobile-navigation-panel > button.selected {
-    background: #f1f1f1;
-    color: #333;
-  }
-  .mobile-menu-divider {
-    height: 1px;
-    background: #eee;
-    margin: 7px 9px;
-  }
+  .mobile-navigation { display: block; }
   .error-banner {
     left: 18px;
   }
@@ -542,11 +545,6 @@ body,
   .topbar-tools .icon-button {
     padding: 5px;
   }
-  .mobile-navigation-panel {
-    right: -1px;
-    width: 220px;
-    top: 39px;
-  }
   .now-page .listening-layout {
     padding-left: 30px;
     padding-right: 30px;
@@ -565,30 +563,7 @@ body,
   .player-bar {
     grid-template-columns: minmax(150px, 1fr) minmax(235px, 1.2fr);
   }
-  .mobile-navigation-panel > button > small {
-    font-size: 10px;
-    color: #aaa;
-  }
-  .mobile-volume {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 13px 11px;
-    color: #777;
-    font-size: 12px;
-  }
-  .mobile-volume > svg {
-    flex-shrink: 0;
-  }
-  .mobile-volume > span {
-    white-space: nowrap;
-  }
-  .mobile-volume > input {
-    flex: 1;
-    min-width: 0;
-    margin-left: 1px;
-    height: 3px;
-  }
+
 }
 @media (max-width: 600px) {
   :root {

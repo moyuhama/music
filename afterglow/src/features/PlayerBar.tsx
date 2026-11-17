@@ -39,8 +39,11 @@ export default function PlayerBar({
   const repeating = m.mode === "repeat-one";
   const modeName = m.mode === "sequence" ? "顺序" : m.mode === "shuffle" ? "随机" : "单曲循环";
   function cycleMode() {
-    if (listeningHost) m.setMode(repeating ? "sequence" : "repeat-one");
-    else m.setMode(m.mode === "sequence" ? "repeat-one" : repeating ? "shuffle" : "sequence");
+    m.setMode(m.mode === "sequence" ? "repeat-one" : repeating ? "shuffle" : "sequence");
+  }
+  function toggleMute() {
+    if (state.volume) { lastVolume.current = state.volume; player.setVolume(0); }
+    else player.setVolume(lastVolume.current || .7);
   }
   const controls = (
     <section
@@ -81,10 +84,10 @@ export default function PlayerBar({
         <div className={listeningHost ? "transport-buttons" : "playback-buttons"}>
           <button
             className={`${listeningHost ? "transport-icon transport-repeat" : "icon-button mode-button"} ${(listeningHost ? m.mode === "repeat-one" : m.mode !== "sequence") ? "on" : ""}`}
-            aria-label={listeningHost ? `单曲循环：${repeating ? "开启" : "关闭"}` : `播放模式：${modeName}，点击切换`}
+            aria-label={`播放模式：${modeName}，点击切换`}
             onClick={cycleMode}
           >
-            {m.mode === "shuffle" && !listeningHost ? (
+            {m.mode === "shuffle" ? (
               <Shuffle size={17} />
             ) : m.mode === "repeat-one" ? (
               <Repeat1 size={17} />
@@ -122,13 +125,7 @@ export default function PlayerBar({
             <SkipForward size={20} fill="currentColor" />
           </button>
           {listeningHost && (
-            <button
-              className={`transport-icon transport-shuffle ${m.mode === "shuffle" ? "on" : ""}`}
-              aria-label={`随机播放：${m.mode === "shuffle" ? "开启" : "关闭"}`}
-              onClick={() => m.setMode(m.mode === "shuffle" ? "sequence" : "shuffle")}
-            >
-              <Shuffle size={18} />
-            </button>
+            <button className={`transport-icon transport-queue ${queueOpen ? "on" : ""}`} aria-label="播放队列" onClick={openQueue}><ListMusic size={19} /></button>
           )}
           {!listeningHost && current?.lyrics?.length ? <button
             className="lyric-button"
@@ -159,6 +156,14 @@ export default function PlayerBar({
           <span>{formatTime(state.duration)}</span>
         </div>
       </div>
+      {listeningHost && (
+        <div className="transport-volume">
+          <button className="transport-icon" aria-label={state.volume ? "静音" : "取消静音"} onClick={toggleMute}>
+            {state.volume ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          </button>
+          <input aria-label="音量" type="range" min="0" max="1" step="0.01" value={state.volume} onChange={(e) => player.setVolume(Number(e.target.value))} />
+        </div>
+      )}
       {!listeningHost && <div className="player-extra">
         <button
           className="icon-button"

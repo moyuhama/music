@@ -13,6 +13,7 @@ export function useLyricFollow(
   index: number,
   seekVersion: number,
   active: boolean,
+  focusRatio = .5,
 ) {
   const scroller = useRef<HTMLDivElement>(null);
   const lineRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -33,7 +34,7 @@ export function useLyricFollow(
       if (!active || !following || !container || !line) return;
       container.scrollTo({
         top:
-          line.offsetTop - container.clientHeight / 2 + line.clientHeight / 2,
+          line.offsetTop - container.clientHeight * focusRatio + line.clientHeight / 2,
         behavior:
           immediate ||
           instant.current ||
@@ -43,7 +44,7 @@ export function useLyricFollow(
       });
       instant.current = false;
     },
-    [index, active, following],
+    [index, active, following, focusRatio],
   );
   useLayoutEffect(() => align(), [align, alignment]);
   useEffect(() => {
