@@ -18,6 +18,7 @@ import {
 import { formatTime } from "../domain/types";
 import { player } from "../player/engine";
 import Cover from "../components/Cover";
+import SleepTimer from "./SleepTimer";
 import type { MusicController } from "./useMusic";
 export default function PlayerBar({
   music: m,
@@ -196,6 +197,7 @@ export default function PlayerBar({
           <small>{m.queue.length}</small>
         </button>
       </div>}
+      <SleepTimer />
     </section>
   );
   return listeningHost ? createPortal(controls, listeningHost) : controls;

@@ -28,7 +28,6 @@ import { useMusic } from "./features/useMusic";
 import Cover from "./components/Cover";
 import RemoteDialog from "./features/RemoteDialog";
 import PlayerBar from "./features/PlayerBar";
-import SleepTimer from "./features/SleepTimer";
 import { useScrollMemory } from "./interactions/useScrollMemory";
 import MobileNavigation from "./features/MobileNavigation";
 import NowPlaying from "./features/NowPlaying";
@@ -286,7 +285,6 @@ export default function App() {
             )}
           </label>
           <div className="topbar-tools">
-            <SleepTimer />
             <button
               className="icon-button"
               aria-label="导入音乐文件"
