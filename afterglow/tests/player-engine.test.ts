@@ -95,3 +95,27 @@ test("连续快速切歌时只采用最后一次解析结果", async () => {
   assert.equal(engine.snapshot().trackId, "two");
   assert.equal(audio.src, "https://example.com/two.mp3");
 });
+test("定时暂停保留当前曲目与播放位置", async () => {
+  const engine = new PlayerEngine();
+  const audio = FakeAudio.instances.at(-1)!;
+  await engine.play(track);
+  audio.metadata(40);
+  engine.seek(18);
+  engine.pause();
+  assert.equal(audio.paused, true);
+  assert.equal(engine.snapshot().status, "paused");
+  assert.equal(engine.snapshot().trackId, "one");
+  assert.equal(engine.snapshot().time, 18);
+  assert.equal(engine.hasSource(), true);
+});
+test("定时到期时仍在解析的音源不会随后自动播放", async () => {
+  const engine = new PlayerEngine();
+  const audio = FakeAudio.instances.at(-1)!;
+  const loading = engine.play(track);
+  engine.pause();
+  await loading;
+  assert.equal(audio.paused, true);
+  assert.equal(audio.src, "");
+  assert.equal(engine.snapshot().status, "paused");
+  assert.equal(engine.snapshot().trackId, "one");
+});

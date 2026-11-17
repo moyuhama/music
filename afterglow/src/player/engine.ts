@@ -142,6 +142,13 @@ export class PlayerEngine {
   hasSource() {
     return Boolean(this.source);
   }
+  pause() {
+    // Invalidate pending source resolution so expiry cannot be followed by autoplay.
+    ++this.revision;
+    this.controller?.abort();
+    this.audio.pause();
+    if (this.state.trackId) this.update({ status: "paused" });
+  }
   async toggle() {
     if (!this.state.trackId) return;
     if (this.state.status === "playing" || this.state.status === "loading")
