@@ -1,48 +1,54 @@
-/* Movement belongs to a single cover; the app shell stays in place. */
-html[data-cover-motion] .page-layer {
+/* The listening surface travels vertically; navigation and desktop transport stay pinned. */
+html[data-player-motion] .app-main {
+  view-transition-name: player-surface;
+}
+html[data-player-motion] .page-layer {
   transition: none !important;
 }
-html[data-cover-motion] .page-layer.is-active {
-  opacity: 1;
-  transform: none;
-}
-html[data-cover-motion] .section-enter,
-html[data-cover-motion] .song-heading {
+html[data-player-motion] .section-enter,
+html[data-player-motion] .song-heading {
   animation: none !important;
 }
-::view-transition-group(listening-cover) {
-  animation-duration: 340ms;
-  animation-timing-function: cubic-bezier(0.22, 0.7, 0.2, 1);
-  overflow: clip;
-  border-radius: 8px;
+html[data-player-motion]::view-transition-group(root),
+html[data-player-motion]::view-transition-old(root),
+html[data-player-motion]::view-transition-new(root) {
+  animation: none;
 }
-::view-transition-old(listening-cover),
-::view-transition-new(listening-cover) {
+html[data-player-motion]::view-transition-old(root) { display: none; }
+html[data-player-motion]::view-transition-group(player-surface) {
+  animation-duration: 440ms;
+  animation-timing-function: cubic-bezier(.22, .75, .2, 1);
+  overflow: clip;
+}
+html[data-player-motion]::view-transition-old(player-surface),
+html[data-player-motion]::view-transition-new(player-surface) {
   height: 100%;
   width: 100%;
-  object-fit: cover;
   mix-blend-mode: normal;
-  animation-duration: 340ms;
+  animation-duration: 440ms;
+  animation-timing-function: cubic-bezier(.22, .75, .2, 1);
+  animation-fill-mode: both;
 }
-::view-transition-old(root) {
-  animation: page-away 180ms ease both;
+html[data-player-motion="expand"]::view-transition-old(player-surface) {
+  z-index: 1;
+  animation-name: library-recede;
 }
-::view-transition-new(root) {
-  animation: page-arrive 260ms ease both;
+html[data-player-motion="expand"]::view-transition-new(player-surface) {
+  z-index: 2;
+  animation-name: player-rise;
 }
-@keyframes page-away {
-  to {
-    opacity: 0;
-  }
+html[data-player-motion="collapse"]::view-transition-old(player-surface) {
+  z-index: 2;
+  animation-name: player-lower;
 }
-@keyframes page-arrive {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+html[data-player-motion="collapse"]::view-transition-new(player-surface) {
+  z-index: 1;
+  animation-name: library-return;
 }
+@keyframes player-rise { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes player-lower { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes library-recede { from { transform: translateY(0); } to { transform: translateY(-4%); } }
+@keyframes library-return { from { transform: translateY(-4%); } to { transform: translateY(0); } }
 .large-artwork {
   padding: 0;
   border: 0;

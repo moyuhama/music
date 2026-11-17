@@ -303,3 +303,24 @@
 .soda-app .mobile-navigation > .icon-button[aria-expanded="true"] { background: #ffffff12; color: #eee; }
 .soda-app .mobile-volume > input { background: #ffffff30; }
 .soda-app .mobile-volume > input::-webkit-slider-thumb { background: #ddd; }
+
+/* Vertical fallback also keeps inactive pages mounted for uninterrupted playback. */
+.soda-app .library-page { transform: none; }
+.soda-app .player-page {
+  z-index: 2;
+  opacity: 1;
+  transform: translateY(100%);
+  background: linear-gradient(var(--cover-top), var(--cover-bottom));
+  transition: transform 440ms cubic-bezier(.22, .75, .2, 1), visibility 0s linear 440ms;
+}
+.soda-app .player-page.is-active { transform: translateY(0); visibility: visible; transition-delay: 0s; }
+/* Captured surfaces are opaque so the outgoing music library never shows through. */
+html[data-player-motion] .soda-app .app-main {
+  background: #121212;
+}
+html[data-player-motion] .soda-app.is-listening .app-main {
+  background: linear-gradient(var(--cover-top), var(--cover-bottom));
+}
+@media (prefers-reduced-motion: reduce) {
+  .soda-app .player-page { transition: none; }
+}
