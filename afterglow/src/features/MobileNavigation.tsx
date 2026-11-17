@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Menu,
   Compass,
+  Settings,
   X,
   AudioLines,
   Library,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import type { Playlist, View } from "../domain/types";
 interface Props {
+  hasResources: boolean;
   view: View;
   isPlayer: boolean;
   playlists: Playlist[];
@@ -28,6 +30,7 @@ interface Props {
   onCreate(): void;
 }
 export default function MobileNavigation({
+  hasResources,
   view,
   isPlayer,
   playlists,
@@ -57,12 +60,14 @@ export default function MobileNavigation({
     };
   }, [open]);
   const items = [
+    ...(hasResources ? [{ view: "discovery" as const, name: "发现", Icon: Compass }] : []),
     { view: "modes" as const, name: "听歌模式", Icon: Compass },
     { view: "all" as const, name: "全部音乐", Icon: Library },
     { view: "favorites" as const, name: "我喜欢的音乐", Icon: Heart },
     { view: "recent" as const, name: "最近播放", Icon: Clock3 },
     { view: "local" as const, name: "本地音乐", Icon: FolderOpen },
     { view: "remote" as const, name: "远端音频", Icon: Link2 },
+    { view: "settings" as const, name: "设置", Icon: Settings },
   ];
   return (
     <div

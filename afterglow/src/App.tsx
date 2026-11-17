@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   AudioLines,
   Compass,
+  Settings,
   Library,
   Heart,
   Link2,
@@ -32,11 +33,16 @@ import { useScrollMemory } from "./interactions/useScrollMemory";
 import MobileNavigation from "./features/MobileNavigation";
 import NowPlaying from "./features/NowPlaying";
 import ListeningModes from "./features/ListeningModes";
+import ResourceSettings from "./features/ResourceSettings";
+import ResourceDiscovery from "./features/ResourceDiscovery";
+import { useResources } from "./resources/useResources";
 import { useCoverPalette } from "./features/useCoverPalette";
 import TrackList from "./features/TrackList";
 import QueuePanel from "./features/QueuePanel";
 import { PlaylistDialog, EditTrackDialog } from "./features/LibraryDialogs";
 const viewNames = {
+  settings: "设置",
+  discovery: "发现",
   modes: "听歌模式",
   all: "全部音乐",
   favorites: "我喜欢的音乐",
@@ -46,8 +52,12 @@ const viewNames = {
 };
 export default function App() {
   const m = useMusic();
+  const resources = useResources();
   const palette = useCoverPalette(m.current?.cover);
   const [view, setView] = useState<View>("all");
+  useEffect(() => {
+    if (resources.ready && !resources.hasSources && view === "discovery") setView("settings");
+  }, [resources.ready, resources.hasSources, view]);
   const [query, setQuery] = useState("");
   const [layout, setLayout] = useState<"songs" | "albums">("songs");
   const [albumFilter, setAlbumFilter] = useState("");
@@ -131,6 +141,7 @@ export default function App() {
   return (
     <div
       className={`app soda-app ${detailOpen ? "detail-is-open is-listening" : ""}`}
+      data-view={detailOpen ? "player" : view}
       style={
         {
           "--listening-cover": m.current?.cover ? `url("${m.current.cover}")` : "none",
@@ -203,9 +214,9 @@ export default function App() {
             <AudioLines size={19} />
             <span>正在播放</span>
           </button>
-          {(["modes", "all", "favorites"] as const).map(
+          {(["discovery", "modes", "all", "favorites", "settings"] as const).filter((v) => v !== "discovery" || resources.hasSources).map(
             (v) => {
-              const Icon = v === "modes" ? Compass : v === "all" ? Library : Heart;
+              const Icon = v === "modes" || v === "discovery" ? Compass : v === "all" ? Library : v === "settings" ? Settings : Heart;
               return (
                 <button
                   key={v}
@@ -300,6 +311,7 @@ export default function App() {
               <Link2 size={18} />
             </button>
             <MobileNavigation
+              hasResources={resources.hasSources}
               view={view}
               isPlayer={detailOpen}
               playlists={m.playlists}
@@ -321,7 +333,9 @@ export default function App() {
             aria-hidden={detailOpen}
             inert={detailOpen}
           >
-            {view === "modes" ? <ListeningModes
+            {view === "settings" ? <ResourceSettings resources={resources} onDiscover={() => changeView("discovery")} />
+            : view === "discovery" ? <ResourceDiscovery packages={resources.packages} onPlay={m.playResource} />
+            : view === "modes" ? <ListeningModes
               music={m}
               onOpenAlbum={(album) => { changeView("all"); setAlbumFilter(album); }}
               onOpenPlaylist={(id) => changeView(`playlist:${id}`)}

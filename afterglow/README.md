@@ -66,3 +66,11 @@ node scripts/service.mjs stop
 [架构约定](docs/architecture.md) · [迭代计划](docs/roadmap.md) · [交互设计决策](docs/design.md)
 
 [音乐来源与署名](docs/music-sources.md)
+
+## 导入音源资源包
+
+在“设置 → 导入资源 ZIP”选择带有 `manifest.json` 和其声明脚本的资源包。导入后侧边栏出现“发现”，可以选择音源、切换频道和分类、搜索专辑、打开目录及播放。包仅保存在当前浏览器的独立 IndexedDB 数据库，同名包重新导入会替换旧版本；移除最后一个包后隐藏“发现”。不会上传资源包至 GitHub，也不随网站分发第三方脚本。
+
+`src/resources` 独立实现插件宿主，脚本运行在 Worker 内的 QuickJS 隔离环境，提供受限网络、HTML 解析和 SDK 工具。导入阶段禁用联网，限制 ZIP 展开体积、脚本内存、执行时间、请求次数和响应体积。插件不能读取音乐库或浏览器全局对象。
+
+GitHub Pages 是静态网页：接口仍须允许浏览器跨域访问，浏览器不能伪装 Referer、Cookie 或任意 User-Agent，也不支持原生宿主的页面验证和音频嗅探。已验证 ShunSources v5.6 的 38 个音源可以注册，全球电台能加载目录并播放；不代表所有来源可用。喜马拉雅分类可加载，但其 mobile.ximalaya.com 章节接口不允许第三方网页读取，需要额外线上请求网关。当前版本没有接入或部署网关。

@@ -320,6 +320,17 @@ export function useMusic() {
     setTracks((old) => [...old, track]);
     notify("音频链接已添加到音乐库");
   }
+  function playResource(input: { url: string; title: string; artist: string; album: string; cover?: string }) {
+    const existing = tracks.find((track) => track.source.kind === "remote" && track.source.url === input.url);
+    const track: Track = existing ?? {
+      id: crypto.randomUUID(), title: input.title, artist: input.artist, album: input.album,
+      cover: input.cover, source: { kind: "remote", url: input.url },
+      addedAt: Date.now(), favorite: false, persist: true,
+    };
+    setTracks((old) => old.some((item) => item.id === track.id) ? old : [...old, track]);
+    setQueue([track.id]);
+    void player.play(track);
+  }
   function addPlaylist(name: string) {
     const id = crypto.randomUUID();
     setPlaylists((old) => [...old, { id, name, trackIds: [] }]);
@@ -380,6 +391,7 @@ export function useMusic() {
     setQueue((old) => (old.includes(id) ? old : [...old, id]));
   }
   return {
+    playResource,
     tracks,
     playlists,
     queue: ids,

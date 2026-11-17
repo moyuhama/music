@@ -5,5 +5,6 @@ import "./styles/theme.css";
 import "./styles/navigation.css";
 import "./styles/interactions.css";
 import "./styles/listening.css";
+import "./styles/resources.css";
 import "./styles/sleep-timer.css";
 createRoot(document.getElementById("root")!).render(<App />);
