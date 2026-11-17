@@ -10,7 +10,6 @@ import {
   Play,
   Upload,
   Music2,
-  Clock3,
   ChevronLeft,
   ChevronRight,
   FolderOpen,
@@ -80,7 +79,7 @@ export default function App() {
     ? m.playlists.find((p) => p.id === view.slice(9))
     : undefined;
   const title =
-    playlist?.name ?? viewNames[view as keyof typeof viewNames] ?? "全部音乐";
+    albumFilter || playlist?.name || viewNames[view as keyof typeof viewNames] || "全部音乐";
   const selected = m.tracks.filter(
     (t) =>
       (view !== "favorites" || t.favorite) &&
@@ -129,8 +128,6 @@ export default function App() {
     update();
     return () => media.removeEventListener("change", update);
   }, []);
-  const sampleNames = ["晚风来信", "城市慢游", "月光留声"];
-  const sampleFiles = ["evening", "city", "moon"];
   return (
     <div
       className={`app soda-app ${detailOpen ? "detail-is-open is-listening" : ""}`}
@@ -206,20 +203,9 @@ export default function App() {
             <AudioLines size={19} />
             <span>正在播放</span>
           </button>
-          {(["modes", "all", "favorites", "recent", "local", "remote"] as const).map(
+          {(["modes", "all", "favorites"] as const).map(
             (v) => {
-              const Icon =
-                v === "modes"
-                  ? Compass
-                  : v === "all"
-                  ? Library
-                  : v === "favorites"
-                    ? Heart
-                    : v === "recent"
-                      ? Clock3
-                      : v === "local"
-                        ? FolderOpen
-                        : Link2;
+              const Icon = v === "modes" ? Compass : v === "all" ? Library : Heart;
               return (
                 <button
                   key={v}
@@ -237,36 +223,6 @@ export default function App() {
             },
           )}
         </nav>
-        <div className="nav-group-title playlist-group">
-          创建的歌单
-          <button aria-label="新建歌单" onClick={() => setPlaylistOpen(true)}>
-            <Plus size={16} />
-          </button>
-        </div>
-        <div className="playlist-nav">
-          {m.playlists.map((p) => (
-            <button
-              className={`nav-item ${!detailOpen && playlist?.id === p.id ? "active" : ""}`}
-              key={p.id}
-              aria-label={`歌单 ${p.name}`}
-              onClick={() => changeView(`playlist:${p.id}`)}
-            >
-              <ListMusic size={18} />
-              <span>{p.name}</span>
-              <small>{p.trackIds.length}</small>
-            </button>
-          ))}
-          <button
-            className="create-playlist"
-            aria-label="创建歌单"
-            onClick={() => setPlaylistOpen(true)}
-          >
-            <span>
-              <Plus size={16} />
-            </span>
-            <em>新建一个歌单</em>
-          </button>
-        </div>
         <div className="sidebar-bottom">
           <div className="private-mode">
             <ShieldCheck size={16} />
@@ -365,15 +321,19 @@ export default function App() {
             aria-hidden={detailOpen}
             inert={detailOpen}
           >
-            {view === "modes" ? <ListeningModes music={m} onPlay={() => setPlayerView(true)} /> : <section className="content">
+            {view === "modes" ? <ListeningModes
+              music={m}
+              onOpenAlbum={(album) => { changeView("all"); setAlbumFilter(album); }}
+              onOpenPlaylist={(id) => changeView(`playlist:${id}`)}
+            /> : <section className="content">
               <div
                 className="collection-header section-enter"
-                key={`header-${view}`}
+                key={`header-${view}-${albumFilter}`}
               >
                 <div className="collection-copy">
                   <h1>{title}</h1>
                   <p className="library-summary">
-                    {selected.length} 首歌曲 · {new Set(selected.map((t) => t.album || "未知专辑")).size} 张专辑
+                    {albumFilter ? `${filtered.length} 首歌曲 · 专辑` : `${selected.length} 首歌曲 · ${new Set(selected.map((t) => t.album || "未知专辑")).size} 张专辑`}
                   </p>
                 </div>
               </div>
@@ -542,47 +502,6 @@ export default function App() {
                   </div>
                 )}
               </div>
-              {!query && !playlist && view === "all" && (
-                <section className="sample-section">
-                  <div className="section-heading">
-                    <h2>试听一下</h2>
-                    <span>余音声音实验室 · 原创合成纯音乐</span>
-                  </div>
-                  <div className="sample-grid">
-                    {sampleNames.map((name, i) => (
-                      <button
-                        className="sample-card"
-                        key={name}
-                        disabled={!m.ready}
-                        onClick={() => m.addSample(i)}
-                      >
-                        <div className="sample-art">
-                          <img
-                            src={`${import.meta.env.BASE_URL}covers/${sampleFiles[i]}.svg`}
-                            alt=""
-                          />
-                          <span>
-                            <Play size={17} fill="currentColor" />
-                          </span>
-                        </div>
-                        <div>
-                          <strong>{name}</strong>
-                          <small>
-                            {
-                              [
-                                "Ambient / 温暖、舒缓",
-                                "Lo-fi / 松弛、轻盈",
-                                "Piano / 安静、入夜",
-                              ][i]
-                            }
-                          </small>
-                        </div>
-                        <Play className="sample-play" size={16} />
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              )}
               <footer className="library-footer">
                 <span>
                   <ShieldCheck size={13} />
