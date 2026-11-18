@@ -1,5 +1,5 @@
 .control-hint-scope { display:contents; }
-.control-hint { position:fixed; z-index:200; max-width:220px; padding:7px 11px; border-radius:6px; color:#eee; background:#323232; border:1px solid #ffffff18; box-shadow:0 4px 15px #0004; font-size:12px; line-height:1.5; text-align:center; pointer-events:none; transform:translate(-50%,-100%); animation:hint-appear .12s ease-out; }
+.control-hint { position:fixed; z-index:200; max-width:220px; padding:7px 11px; border-radius:3px; color:#171717; background:#f7f4ee; border:0; box-shadow:0 2px 8px #0002; font-size:12px; line-height:1.5; text-align:center; pointer-events:none; transform:translate(-50%,-100%); animation:hint-appear .12s ease-out; }
 @keyframes hint-appear { from{opacity:0;} to{opacity:1;} }
 .playback-rate { position:absolute; right:262px; top:50%; transform:translateY(-50%); z-index:15; }
 .playback-rate-trigger { display:grid; place-items:center; min-width:42px; height:36px; padding:0 6px; color:#ddd; border-radius:8px; font-size:12px; font-variant-numeric:tabular-nums; }
@@ -20,3 +20,12 @@
   .listening-controls .playback-rate-trigger { height:26px; }
 }
 @media(prefers-reduced-motion:reduce) { .control-hint { animation:none; } }
+
+.volume-control { position:relative; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.volume-panel { position:fixed; z-index:220; display:flex; align-items:center; justify-content:center; width:40px; height:160px; padding:12px 0; box-sizing:border-box; border-radius:12px; box-shadow:0 6px 20px #0002; transform:translateX(-50%); }
+.volume-panel::after { content:""; position:absolute; left:0; right:0; top:100%; height:14px; }
+.volume-panel input[type="range"] { appearance:none; -webkit-appearance:none; writing-mode:vertical-lr; direction:rtl; width:4px; height:136px; min-width:4px; padding:0; margin:0; border:0; border-radius:3px; cursor:pointer; background:linear-gradient(to top,#faf7ec var(--volume),#0005 var(--volume)); }
+.volume-panel input[type="range"]::-webkit-slider-thumb { appearance:none; -webkit-appearance:none; width:12px; height:12px; border:0; border-radius:50%; background:#fff; box-shadow:none; }
+.volume-panel input[type="range"]::-moz-range-thumb { width:12px; height:12px; border:0; border-radius:50%; background:#fff; }
+.volume-panel input:focus-visible { outline:2px solid #fff9; outline-offset:5px; }
+.control-hint::after { content:""; position:absolute; left:50%; top:100%; margin-left:-4px; border:4px solid transparent; border-top-color:#f7f4ee; }

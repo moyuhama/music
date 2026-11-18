@@ -1,6 +1,7 @@
 import PlaybackRate from "./PlaybackRate";
 import ControlHints from "./ControlHints";
-import { useRef } from "react";
+import VolumeControl from "./VolumeControl";
+import {useRef} from "react";
 import { createPortal } from "react-dom";
 import {
   AudioLines,
@@ -8,8 +9,6 @@ import {
   Pause,
   SkipBack,
   SkipForward,
-  Volume2,
-  VolumeX,
   Repeat,
   Repeat1,
   Shuffle,
@@ -18,7 +17,6 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { formatTime } from "../domain/types";
-import { player } from "../player/engine";
 import Cover from "../components/Cover";
 import SleepTimer from "./SleepTimer";
 import type { MusicController } from "./useMusic";
@@ -36,17 +34,13 @@ export default function PlayerBar({
   queueOpen: boolean;
 }) {
   const { state, current } = m;
-  const lastVolume = useRef(0.7);
+  const rememberedVolume=useRef(.7);
   const playing = state.status === "playing";
   const loading = state.status === "loading";
   const repeating = m.mode === "repeat-one";
   const modeName = m.mode === "sequence" ? "顺序" : m.mode === "shuffle" ? "随机" : "单曲循环";
   function cycleMode() {
     m.setMode(m.mode === "sequence" ? "repeat-one" : repeating ? "shuffle" : "sequence");
-  }
-  function toggleMute() {
-    if (state.volume) { lastVolume.current = state.volume; player.setVolume(0); }
-    else player.setVolume(lastVolume.current || .7);
   }
   const controls = (
     <ControlHints><section
@@ -88,6 +82,7 @@ export default function PlayerBar({
           <button
             className={`${listeningHost ? "transport-icon transport-repeat" : "icon-button mode-button"} ${(listeningHost ? m.mode === "repeat-one" : m.mode !== "sequence") ? "on" : ""}`}
             aria-label={`播放模式：${modeName}，点击切换`}
+            data-tip={m.mode === "sequence" ? "顺序播放" : m.mode === "shuffle" ? "随机播放" : "单曲循环"}
             onClick={cycleMode}
           >
             {m.mode === "shuffle" ? (
@@ -159,36 +154,9 @@ export default function PlayerBar({
           <span>{formatTime(state.duration)}</span>
         </div>
       </div>
-      {listeningHost && (
-        <div className="transport-volume">
-          <button className="transport-icon" aria-label={state.volume ? "静音" : "取消静音"} onClick={toggleMute}>
-            {state.volume ? <Volume2 size={18} /> : <VolumeX size={18} />}
-          </button>
-          <input aria-label="音量" type="range" min="0" max="1" step="0.01" value={state.volume} onChange={(e) => player.setVolume(Number(e.target.value))} />
-        </div>
-      )}
+      {listeningHost && <div className="transport-volume"><VolumeControl volume={state.volume} rememberedVolume={rememberedVolume} transport/></div>}
       {!listeningHost && <div className="player-extra">
-        <button
-          className="icon-button"
-          aria-label={state.volume ? "静音" : "取消静音"}
-          onClick={() => {
-            if (state.volume) {
-              lastVolume.current = state.volume;
-              player.setVolume(0);
-            } else player.setVolume(lastVolume.current || 0.7);
-          }}
-        >
-          {state.volume ? <Volume2 size={19} /> : <VolumeX size={19} />}
-        </button>
-        <input
-          aria-label="音量"
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={state.volume}
-          onChange={(e) => player.setVolume(Number(e.target.value))}
-        />
+        <VolumeControl volume={state.volume} rememberedVolume={rememberedVolume}/>
         <span className="player-divider" />
         <button
           className={`icon-button queue-trigger ${queueOpen ? "on" : ""}`}
