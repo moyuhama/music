@@ -1,3 +1,4 @@
+import {savedPlaybackRate,validPlaybackRate} from "./rate.ts";
 import type { Track } from "../domain/types";
 import { providers } from "../sources/index.ts";
 export interface PlayerState {
@@ -8,6 +9,7 @@ export interface PlayerState {
   volume: number;
   error: string;
   seekVersion: number;
+  playbackRate: number;
 }
 export class PlayerEngine {
   private audio = new Audio();
@@ -24,11 +26,15 @@ export class PlayerEngine {
     volume: 0.7,
     error: "",
     seekVersion: 0,
+    playbackRate: savedPlaybackRate(),
   };
   onEnded?: () => void;
   constructor() {
     this.audio.preload = "metadata";
     this.audio.volume = 0.7;
+    this.audio.defaultPlaybackRate = this.state.playbackRate;
+    this.audio.playbackRate = this.state.playbackRate;
+    this.audio.preservesPitch = true;
     const updateTime = () =>
       this.update({
         time: this.audio.currentTime,
@@ -126,6 +132,7 @@ export class PlayerEngine {
         });
       } else this.audio.src = source.url;
       if (revision !== this.revision || controller.signal.aborted) return;
+      this.audio.playbackRate = this.state.playbackRate;
       await this.audio.play();
     } catch (e) {
       if (
@@ -187,6 +194,14 @@ export class PlayerEngine {
     if (this.audio.readyState === 0) this.pendingSeek = target;
     else this.audio.currentTime = target;
     this.update({ time: target, seekVersion: this.state.seekVersion + 1 });
+  }
+  setPlaybackRate(rate: number) {
+    if (!validPlaybackRate(rate)) return;
+    this.audio.defaultPlaybackRate = rate;
+    this.audio.playbackRate = rate;
+    this.audio.preservesPitch = true;
+    this.update({ playbackRate: rate });
+    try { localStorage.setItem("afterglow-playback-rate", String(rate)); } catch {}
   }
   setVolume(volume: number) {
     const safe = Math.max(0, Math.min(1, volume));

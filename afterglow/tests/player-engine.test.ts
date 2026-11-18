@@ -119,3 +119,11 @@ test("定时到期时仍在解析的音源不会随后自动播放", async () =>
   assert.equal(engine.snapshot().status, "paused");
   assert.equal(engine.snapshot().trackId, "one");
 });
+test("倍速作用于音频并在切歌、暂停与停止后保持，非法输入不改变速度",async()=>{
+  const engine=new PlayerEngine();const audio=FakeAudio.instances.at(-1)! as FakeAudio & {playbackRate:number;defaultPlaybackRate:number;preservesPitch:boolean};
+  engine.setPlaybackRate(1.5);await engine.play(track);
+  assert.equal(audio.playbackRate,1.5);assert.equal(audio.defaultPlaybackRate,1.5);assert.equal(audio.preservesPitch,true);
+  engine.pause();await engine.play({...track,id:'two'});assert.equal(engine.snapshot().playbackRate,1.5);assert.equal(audio.playbackRate,1.5);
+  for(const value of [0,-1,4,NaN,Infinity])engine.setPlaybackRate(value);
+  assert.equal(engine.snapshot().playbackRate,1.5);engine.stop();assert.equal(engine.snapshot().playbackRate,1.5);
+});

@@ -9,4 +9,5 @@ import "./styles/interactions.css";
 import "./styles/listening.css";
 import "./styles/resources.css";
 import "./styles/sleep-timer.css";
+import "./styles/playback-rate.css";
 createRoot(document.getElementById("root")!).render(<Downloads><App /></Downloads>);

@@ -68,7 +68,7 @@ export default function SleepTimer() {
     }}>
       <button className={`sleep-timer-trigger ${deadline === null ? "" : "is-set"}`} ref={trigger}
         aria-label={deadline === null ? "定时停止" : `定时停止，剩余 ${formatTime(remaining)}`}
-        aria-expanded={open} aria-controls="sleep-timer-panel" title="定时停止" onClick={() => setOpen(!open)}>
+        aria-expanded={open} aria-controls="sleep-timer-panel" onClick={() => setOpen(!open)}>
         <Timer size={18} />
         {deadline !== null && <><span className="sleep-timer-count" aria-hidden="true">{formatTime(remaining)}</span><i /></>}
       </button>

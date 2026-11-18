@@ -1,3 +1,5 @@
+import PlaybackRate from "./PlaybackRate";
+import ControlHints from "./ControlHints";
 import { useRef } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -47,7 +49,7 @@ export default function PlayerBar({
     else player.setVolume(lastVolume.current || .7);
   }
   const controls = (
-    <section
+    <ControlHints><section
       className={listeningHost ? "listening-controls" : "player-bar"}
       aria-label="播放控制"
     >
@@ -74,7 +76,7 @@ export default function PlayerBar({
           </span>
         </button>
         <div className="now-info">
-          <button disabled={!current} onClick={openDetail}>
+          <button disabled={!current} data-tip="打开播放详情" onClick={openDetail}>
             {current?.title ?? "还没有正在播放的音乐"}
           </button>
           <small>{current?.artist ?? "导入音乐，开始聆听"}</small>
@@ -197,8 +199,9 @@ export default function PlayerBar({
           <small>{m.queue.length}</small>
         </button>
       </div>}
+      <PlaybackRate rate={state.playbackRate} />
       <SleepTimer />
-    </section>
+    </section></ControlHints>
   );
   return listeningHost ? createPortal(controls, listeningHost) : controls;
 }
