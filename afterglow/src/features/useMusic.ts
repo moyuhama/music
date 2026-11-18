@@ -387,35 +387,20 @@ export function useMusic() {
     setQueue([]);
     player.stop();
   }
-  function addSample(index: number) {
-    const names = ["晚风来信", "城市慢游", "月光留声"];
-    const urls = ["evening", "city", "moon"];
-    const id = `sample-${urls[index]}`;
-    const track: Track = tracks.find((t) => t.id === id) ?? {
-      id,
-      title: names[index],
-      artist: "余音声音实验室",
-      album: "片刻之间 · 原创合成试听",
-      cover: `${import.meta.env.BASE_URL}covers/${urls[index]}.svg`,
-      duration: 24,
-      source: {
-        kind: "remote",
-        url: new URL(
-          `${import.meta.env.BASE_URL}samples/${urls[index]}.wav`,
-          location.origin,
-        ).href,
-      },
-      addedAt: Date.now(),
-      favorite: false,
-      persist: true,
-    };
-    setTracks((old) =>
-      old.some((t) => t.id === id)
-        ? old.map((t) => (t.id === id ? { ...t, lastPlayed: Date.now() } : t))
-        : [...old, { ...track, lastPlayed: Date.now() }],
-    );
-    void player.play(track);
-    setQueue((old) => (old.includes(id) ? old : [...old, id]));
+  function removeAlbum(album:string) {
+    const removed=tracks.filter(track=>libraryTrack(track)&&track.album===album);
+    const ids=new Set(removed.map(track=>track.id));
+    if(state.trackId&&ids.has(state.trackId))player.stop();
+    for(const track of removed)if(track.source.kind==='local'){forgetFile(track.source.fileKey);void removeLocalFile(track.source.fileKey).catch(()=>{});}
+    setTracks(old=>old.filter(track=>!ids.has(track.id)));
+    setQueue(old=>old.filter(id=>!ids.has(id)));
+    setPlaylists(old=>old.map(list=>({...list,trackIds:list.trackIds.filter(id=>!ids.has(id))})));
+    notify(`已移除专辑「${album}」`);
+  }
+  function removePlaylist(playlistId:string) {
+    setPlaylists(old=>old.filter(list=>list.id!==playlistId));
+    setTracks(old=>old.map(track=>track.origin?.kind==='resource'&&!track.favorite&&!playlists.some(list=>list.id!==playlistId&&list.trackIds.includes(track.id))?{...track,persist:false}:track));
+    notify('已移除歌单');
   }
   return {
     playResource,
@@ -446,7 +431,8 @@ export function useMusic() {
     addToPlaylist,
     removePlaylistTrack,
     clearQueue,
-    addSample,
+    removeAlbum,
+    removePlaylist,
     updateTrack,
     seek,
   };

@@ -540,7 +540,6 @@ export default function App() {
               onClose={() => setPlayerView(false)}
               onImport={importClick}
               onRemote={() => setRemoteOpen(true)}
-              onSample={() => m.addSample(0)}
               onControlsHost={setControlsHost}
             />
           </div>

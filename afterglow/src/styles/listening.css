@@ -344,3 +344,11 @@
 }
 /* Only the page layer scrolls; focus must never scroll the outer sheet host. */
 .soda-app .app-main { overflow: clip; }
+
+.mode-card-wrapper { position:relative; min-width:0; }
+.mode-card-wrapper > .mode-card { width:100%; }
+.mode-card-remove { position:absolute; z-index:2; top:8px; right:8px; display:grid; place-items:center; width:30px; height:30px; padding:0; border-radius:8px; color:#fff; background:#0006; opacity:0; transition:opacity 150ms; }
+.mode-card-wrapper:hover .mode-card-remove,.mode-card-remove:focus-visible { opacity:1; }
+.collection-dialog-actions { display:flex; justify-content:flex-end; gap:12px; margin-top:24px; }
+.collection-dialog-actions button { padding:10px 16px; border-radius:8px; }
+@media (hover:none) { .mode-card-remove { opacity:1; } }

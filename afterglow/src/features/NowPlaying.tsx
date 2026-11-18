@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Plus, Link2, Play, Disc3, LocateFixed } from "lucide-react";
+import { Plus, Link2, Disc3, LocateFixed } from "lucide-react";
 import { activeLine } from "../domain/lyrics";
 import { useLyricFollow } from "../interactions/useLyricFollow";
 import Cover from "../components/Cover";
@@ -10,10 +10,9 @@ interface Props {
   onClose(): void;
   onImport(): void;
   onRemote(): void;
-  onSample(): void;
   onControlsHost(node: HTMLDivElement | null): void;
 }
-export default function NowPlaying({ active, music: m, onClose, onImport, onRemote, onSample, onControlsHost }: Props) {
+export default function NowPlaying({ active, music: m, onClose, onImport, onRemote, onControlsHost }: Props) {
   const track = m.current;
   const hasLyrics = !!track?.lyrics?.length;
   const currentLine = activeLine(track?.lyrics ?? [], m.state.time);
@@ -51,7 +50,6 @@ export default function NowPlaying({ active, music: m, onClose, onImport, onRemo
             <div className="listening-welcome">
               <button onClick={onImport} disabled={!m.ready || m.importing}><Plus size={18} />导入本地音乐</button>
               <button onClick={onRemote} disabled={!m.ready}><Link2 size={17} />添加远端链接</button>
-              <button onClick={onSample} disabled={!m.ready}><Play size={14} />听一段原创试听</button>
             </div>
           )}
         </div>
