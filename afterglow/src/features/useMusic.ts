@@ -1,11 +1,15 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {saveLocalFile,loadLocalFile,removeLocalFile} from "../storage/local-files";
+import {loadBundledLibrary} from "./bundled-library";
+import {libraryTrack,migratePlaybackHistory,mergeBundled} from "../domain/library";
+import type {ResourcePlayback} from "./ResourceDiscovery";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Track, PlayMode, Playlist } from "../domain/types";
 import { nextId, insertNext } from "../domain/types";
 import { player } from "../player/engine";
 import { libraryRepository } from "../storage";
 import { available, registerFile, forgetFile } from "../sources";
 import { readMetadata } from "./import-metadata";
-import { removeDemoLyrics } from "../domain/lyrics";
+import { parseLrc, removeDemoLyrics } from "../domain/lyrics";
 import { mergeCatalog } from "../domain/catalog";
 export function useMusic() {
   const [catalogIds, setCatalogIds] = useState<string[]>([]);
@@ -27,12 +31,20 @@ export function useMusic() {
     let live = true;
     libraryRepository
       .load()
-      .then((saved) => {
+      .catch(() => {
+        if (live) notify("本机存储不可用，仍可在本次打开期间听歌。");
+        return undefined;
+      })
+      .then(async (saved) => {
         if (!live) return;
-        const merged = mergeCatalog(
-          (saved?.tracks ?? []).map(removeDemoLyrics),
-          saved?.catalogIds ?? [],
-        );
+        const savedTracks=migratePlaybackHistory((saved?.tracks??[]).map(removeDemoLyrics),saved?.playlists??[]);
+        await Promise.all(savedTracks.filter(t=>t.source.kind==='local').map(async(track)=>{
+          if(track.source.kind!=='local')return;
+          try{const blob=await loadLocalFile(track.source.fileKey);if(blob&&live)registerFile(track.source.fileKey,new File([blob],track.source.fileName||track.title,{type:blob.type,lastModified:track.source.modified}));}catch{}
+        }));
+        const base=mergeCatalog(savedTracks,saved?.catalogIds??[]);
+        const bundled=await loadBundledLibrary();if(!live)return;
+        const merged=bundled?mergeBundled(base.tracks,bundled,base.catalogIds):base;
         setTracks(merged.tracks);
         setCatalogIds(merged.catalogIds);
         if (saved) {
@@ -41,11 +53,11 @@ export function useMusic() {
           setMode(saved.mode);
           player.setVolume(saved.volume);
           const selected =
-            saved.tracks.find((t) => t.id === saved.currentId) ??
-            [...saved.tracks]
+            merged.tracks.find((t) => t.id === saved.currentId) ??
+            [...merged.tracks]
               .sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0))
               .find(available) ??
-            saved.tracks[0];
+            merged.tracks[0];
           if (selected)
             player.select(
               merged.tracks.find((t) => t.id === selected.id) ?? selected,
@@ -93,6 +105,12 @@ export function useMusic() {
     const timer = setTimeout(() => notify(""), 4500);
     return () => clearTimeout(timer);
   }, [toast]);
+  useEffect(()=>{
+    if(!ready)return;let live=true;
+    const refresh=()=>{if(document.visibilityState==='hidden')return;void loadBundledLibrary().then(fresh=>{if(!live||!fresh)return;setTracks(old=>{const merged=mergeBundled(old,fresh,catalogIds).tracks;return JSON.stringify(old)===JSON.stringify(merged)?old:merged;});setCatalogIds(old=>{const next=[...new Set([...old,...fresh.map(track=>track.id)])];return next.length===old.length?old:next;});});};
+    window.addEventListener('focus',refresh);document.addEventListener('visibilitychange',refresh);
+    return()=>{live=false;window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh);};
+  },[ready,catalogIds]);
   function updateTrack(id: string, patch: Partial<Track>) {
     setTracks((old) => old.map((t) => (t.id === id ? { ...t, ...patch } : t)));
   }
@@ -209,7 +227,7 @@ export function useMusic() {
     setImporting(true);
     const added: Track[] = [];
     const replaced = new Set<string>();
-    let skipped = 0;
+    let skipped = 0, unsavedFiles = 0;
     try {
       for (const file of Array.from(files)) {
         if (
@@ -233,6 +251,7 @@ export function useMusic() {
         const fileKey =
           existing?.source.kind === "local" ? existing.source.fileKey : id;
         registerFile(fileKey, file);
+        try { await saveLocalFile(fileKey,file); } catch { unsavedFiles++; }
         const metadata = await readMetadata(file);
         replaced.add(id);
         added.push({
@@ -258,7 +277,7 @@ export function useMusic() {
       setTracks((old) => [...old.filter((t) => !replaced.has(t.id)), ...added]);
       notify(
         added.length
-          ? `已导入 ${added.length} 首音乐${skipped ? `，跳过 ${skipped} 个非音频文件` : ""}`
+          ? `已导入 ${added.length} 首音乐${skipped ? `，跳过 ${skipped} 个非音频文件` : ""}${unsavedFiles ? "；部分文件未能保存在浏览器，下次需重新导入" : ""}`
           : "请选择 MP3、WAV、FLAC 等音频文件。",
       );
     } finally {
@@ -268,7 +287,7 @@ export function useMusic() {
   }
   function favorite(id: string) {
     setTracks((old) =>
-      old.map((t) => (t.id === id ? { ...t, favorite: !t.favorite } : t)),
+      old.map((t) => (t.id === id ? { ...t, favorite: !t.favorite, persist: t.origin?.kind === "resource" ? (!t.favorite || playlists.some(list=>list.trackIds.includes(id))) : true } : t)),
     );
   }
   function removeFromQueue(id: string) {
@@ -283,7 +302,7 @@ export function useMusic() {
   function removeTrack(id: string) {
     removeFromQueue(id);
     const track = tracks.find((t) => t.id === id);
-    if (track?.source.kind === "local") forgetFile(track.source.fileKey);
+    if (track?.source.kind === "local") { forgetFile(track.source.fileKey); void removeLocalFile(track.source.fileKey).catch(()=>{}); }
     setTracks((old) => old.filter((t) => t.id !== id));
     setPlaylists((old) =>
       old.map((p) => ({ ...p, trackIds: p.trackIds.filter((v) => v !== id) })),
@@ -320,23 +339,28 @@ export function useMusic() {
     setTracks((old) => [...old, track]);
     notify("音频链接已添加到音乐库");
   }
-  function playResource(input: { url: string; title: string; artist: string; album: string; cover?: string }) {
-    const existing = tracks.find((track) => track.source.kind === "remote" && track.source.url === input.url);
-    const track: Track = existing ?? {
-      id: crypto.randomUUID(), title: input.title, artist: input.artist, album: input.album,
-      cover: input.cover, source: { kind: "remote", url: input.url },
-      addedAt: Date.now(), favorite: false, persist: true,
-    };
-    setTracks((old) => old.some((item) => item.id === track.id) ? old : [...old, track]);
-    setQueue([track.id]);
-    void player.play(track);
+  function playResource(input: ResourcePlayback) {
+    const origin={...input.origin,resolvedAt:Date.now()};
+    const id="resource:"+JSON.stringify([origin.packageId,origin.sourceId,origin.itemUrl]);
+    const existing=tracks.find(track=>track.id===id || (track.origin?.kind==='resource'&&track.origin.packageId===origin.packageId&&track.origin.sourceId===origin.sourceId&&track.origin.itemUrl===origin.itemUrl));
+    const track:Track={...existing,id:existing?.id||id,title:existing?.title||input.title,artist:existing?.artist||input.artist,album:existing?.album||input.album,
+      cover:existing?.cover||input.cover,source:{kind:'remote',url:input.url},origin,addedAt:existing?.addedAt||Date.now(),favorite:existing?.favorite||false,persist:existing?.persist||false,
+      lyricText:input.lyricText||existing?.lyricText,lyrics:input.lyricText?parseLrc(input.lyricText):existing?.lyrics,subtitles:input.subtitles||existing?.subtitles};
+    setTracks(old=>[...old.filter(item=>item.id!==track.id),track]);setQueue([track.id]);void player.play(track);
   }
+  const pruneResourceTracks=useCallback((activeKeys:string[])=>{
+    const active=new Set(activeKeys),missing=tracks.filter(track=>track.origin?.kind==='resource'&&!track.persist&&!active.has(track.origin.packageId+"/"+track.origin.sourceId));
+    if(!missing.length)return;const ids=new Set(missing.map(track=>track.id));
+    if(state.trackId&&ids.has(state.trackId))player.stop();
+    setTracks(old=>old.filter(track=>!ids.has(track.id)));setQueue(old=>old.filter(id=>!ids.has(id)));
+  },[tracks,state.trackId]);
   function addPlaylist(name: string) {
     const id = crypto.randomUUID();
     setPlaylists((old) => [...old, { id, name, trackIds: [] }]);
     return id;
   }
   function addToPlaylist(playlistId: string, trackId: string) {
+    setTracks(old=>old.map(track=>track.id===trackId?{...track,persist:true}:track));
     setPlaylists((old) =>
       old.map((p) =>
         p.id === playlistId
@@ -347,6 +371,7 @@ export function useMusic() {
     notify("已加入歌单");
   }
   function removePlaylistTrack(playlistId: string, trackId: string) {
+    setTracks(old=>old.map(track=>track.id===trackId && track.origin?.kind==='resource' && !track.favorite && !playlists.some(list=>list.id!==playlistId&&list.trackIds.includes(trackId))?{...track,persist:false}:track));
     setPlaylists((old) =>
       old.map((p) =>
         p.id === playlistId
@@ -354,7 +379,7 @@ export function useMusic() {
           : p,
       ),
     );
-    notify("已从歌单移除，歌曲仍保留在音乐库");
+    notify("已从歌单移除");
   }
   function clearQueue() {
     setQueue([]);
@@ -392,7 +417,9 @@ export function useMusic() {
   }
   return {
     playResource,
-    tracks,
+    pruneResourceTracks,
+    playbackTracks: tracks,
+    tracks: tracks.filter(libraryTrack),
     playlists,
     queue: ids,
     mode,

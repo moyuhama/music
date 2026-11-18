@@ -56,6 +56,7 @@ export default function App() {
   const resources = useResources();
   const visualCover = useRetainedCover(m.current?.cover);
   const palette = useCoverPalette(visualCover);
+  useEffect(()=>{if(resources.ready)m.pruneResourceTracks(resources.packages.flatMap(pkg=>pkg.sources.map(source=>pkg.id+"/"+source.id)));},[resources.ready,resources.packages,m.pruneResourceTracks]);
   const [view, setView] = useState<View>("all");
   useEffect(() => {
     if (resources.ready && !resources.hasSources && view === "discovery") setView("settings");
@@ -95,8 +96,8 @@ export default function App() {
   const selected = m.tracks.filter(
     (t) =>
       (view !== "favorites" || t.favorite) &&
-      (view !== "local" || t.source.kind === "local") &&
-      (view !== "remote" || t.source.kind === "remote") &&
+      (view !== "local" || t.source.kind === "local" || t.origin?.kind === "bundled") &&
+      (view !== "remote" || (t.source.kind === "remote" && t.origin?.kind !== "bundled")) &&
       (view !== "recent" || t.lastPlayed) &&
       (!playlist || playlist.trackIds.includes(t.id)),
   );

@@ -36,6 +36,19 @@ const remote: SourceProvider = {
   async resolve(track, signal) {
     signal.throwIfAborted();
     if (track.source.kind !== "remote") throw new Error("音源类型不匹配");
+    if(track.origin?.kind==='resource'){
+      const origin=track.origin;
+      const {loadPackages}=await import('../resources/repository.ts');
+      const packages=await loadPackages();signal.throwIfAborted();
+      const pkg=packages.find(item=>item.id===origin.packageId&&item.sources.some(source=>source.id===origin.sourceId));
+      if(!pkg)throw new Error('该歌曲的音源已移除，请重新导入对应资源包');
+      if(!origin.resolvedAt||Date.now()-origin.resolvedAt>30000){
+        const {runResource}=await import('../resources/client.ts');const {resourceMediaUrl}=await import('../resources/media.ts');
+        const result=await runResource<string|{url:string;headers?:Record<string,string>}>(pkg,'audio',origin.sourceId,[origin.itemUrl],signal);
+        const audio=typeof result==='string'?{url:result}:result;
+        return{url:resourceMediaUrl(audio.url,audio.headers),release(){}};
+      }
+    }
     return { url: validateUrl(track.source.url), release() {} };
   },
 };

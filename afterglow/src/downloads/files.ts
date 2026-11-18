@@ -3,7 +3,7 @@ export {safeName,audioExtension} from "./format.mjs";
 import {resourceMediaUrl} from "../resources/media.ts";
 import { Zip, ZipPassThrough, strToU8 } from "fflate";
 import type { LyricLine } from "../domain/types";
-export interface DownloadAsset { url: string; file?: Blob; fileName?: string; headers?: Record<string,string>; release?(): void; lyricText?: string; lyrics?: LyricLine[]; subtitles?: { text: string; format: "lrc" | "srt" | "vtt" | "txt" }[] }
+export interface DownloadAsset { url: string; file?: Blob; bundledPath?: string; fileName?: string; headers?: Record<string,string>; release?(): void; lyricText?: string; lyrics?: LyricLine[]; subtitles?: { text: string; format: "lrc" | "srt" | "vtt" | "txt" }[] }
 export interface DownloadItem { id: string; title: string; resolve(signal: AbortSignal): Promise<DownloadAsset> }
 export function lrcText(lines: LyricLine[]) {
   return lines.filter((line) => Number.isFinite(line.time) && line.time >= 0).map((line) => {

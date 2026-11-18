@@ -1,3 +1,4 @@
+import {bundledFile} from './bundled-library.mjs';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
@@ -49,16 +50,17 @@ export class DiskDownloads {
   }catch(error){await Promise.all(created.map(dest=>fsp.rm(dest,{force:true})));throw error;}
  }
  async addRemote(id,input){
-  const job=this.get(id),meta=this.metadata(job,input);publicTarget(input.url);
+  const job=this.get(id),meta=this.metadata(job,input);if(!input.bundledPath)publicTarget(input.url);
   return this.run(job,async signal=>{
    const file=path.join(job.dir,randomUUID()+'.audio');let upstream;
    try{
-    upstream=await this.opener(input.url,{headers:input.headers,signal});
+    if(input.bundledPath){const file=await bundledFile(input.bundledPath);upstream={status:200,url:'https://bundled.invalid/'+encodeURIComponent(path.basename(file)),headers:{'content-type':'application/octet-stream'},stream:fs.createReadStream(file)};}
+    else upstream=await this.opener(input.url,{headers:input.headers,signal});
     if(upstream.status<200||upstream.status>=300)throw new Error('下载失败（HTTP '+upstream.status+'）');
     const mime=String(upstream.headers['content-type']||'application/octet-stream');
     if(/text\/|json|mpegurl/i.test(mime)||/\.m3u8(?:$|\?)/i.test(upstream.url||input.url)||upstream.headers['icy-name']||upstream.headers['icy-metaint'])throw new Error('此来源是网页、直播流或播放清单，不能保存为单个音频');
     const bytes=await this.spool(job,upstream.stream,file,signal);
-    return await this.commit(job,meta,file,bytes,audioExtension(input.fileName||input.url,mime));
+    return await this.commit(job,meta,file,bytes,audioExtension(input.fileName||input.bundledPath||input.url,mime));
    }catch(error){upstream?.stream.destroy();await fsp.rm(file,{force:true});throw error;}
   });
  }

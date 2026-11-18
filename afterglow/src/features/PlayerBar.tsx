@@ -64,7 +64,7 @@ export default function PlayerBar({
             <Cover
               playerRole="mini"
               src={current.cover}
-              index={m.tracks.indexOf(current)}
+              index={Math.max(0,m.playbackTracks.indexOf(current))}
             />
           ) : (
             <div className="idle-cover">

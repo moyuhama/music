@@ -30,7 +30,7 @@ export default function NowPlaying({ active, music: m, onClose, onImport, onRemo
       <div className="listening-composition">
         <div className="listening-record">
           <div className="listening-artwork">
-            {track ? <Cover playerRole="full" src={track.cover} index={m.tracks.indexOf(track)} large /> : <Disc3 size={72} strokeWidth={.7} />}
+            {track ? <Cover playerRole="full" src={track.cover} index={Math.max(0,m.playbackTracks.indexOf(track))} large /> : <Disc3 size={72} strokeWidth={.7} />}
           </div>
         <div className="listening-details">
           <header className="listening-metadata">

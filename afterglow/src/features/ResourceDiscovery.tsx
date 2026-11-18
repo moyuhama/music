@@ -13,7 +13,7 @@ function http(value: unknown, base?: string) {
   if (typeof value !== "string" || !value) return "";
   try { const url = new URL(value, base); return ["http:", "https:"].includes(url.protocol) && !url.username && !url.password ? url.href : ""; } catch { return ""; }
 }
-export interface ResourcePlayback { url: string; title: string; artist: string; album: string; cover?: string }
+export interface ResourcePlayback { origin: {kind:"resource";packageId:string;sourceId:string;itemUrl:string}; lyricText?:string;subtitles?:ResourceEpisode["subtitles"]; url: string; title: string; artist: string; album: string; cover?: string }
 export default function ResourceDiscovery({ packages, onPlay }: { packages: ResourcePackage[]; onPlay(track: ResourcePlayback): void }) {
   const downloads = useDownloads();
   const [selecting,setSelecting] = useState(false);
@@ -112,7 +112,7 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
       const url = http(audio?.url, entry.source.url);
       if (!url) throw new Error("音源没有返回可播放的音频地址");
       if (location.protocol === "https:" && url.startsWith("http:")) throw new Error("此音频仅提供 HTTP 地址，HTTPS 网页无法播放，请打开来源网站收听");
-      onPlay({ url: resourceMediaUrl(url, "headers" in audio ? audio.headers : undefined), title: episode.title === "直播" ? book.title : episode.title, artist: book.artist || entry.source.name, album: book.title, cover: book.coverUrl });
+      onPlay({ url: resourceMediaUrl(url, "headers" in audio ? audio.headers : undefined), title: episode.title === "直播" ? book.title : episode.title, artist: book.artist || entry.source.name, album: book.title, cover: book.coverUrl, origin:{kind:"resource",packageId:entry.pkg.id,sourceId:entry.source.id,itemUrl:episode.url},lyricText:(audio as DownloadAsset).lyricText||episode.lyricText,subtitles:(audio as DownloadAsset).subtitles||episode.subtitles });
     });
   }
   function episodeDownload(episode: ResourceEpisode): DownloadItem {

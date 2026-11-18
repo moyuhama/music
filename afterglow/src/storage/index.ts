@@ -41,6 +41,7 @@ export const libraryRepository = {
         {
           ...value,
           tracks,
+          currentId: value.currentId && savedIds.has(value.currentId) ? value.currentId : null,
           queue: value.queue?.filter((id) => savedIds.has(id)),
           playlists: value.playlists?.map((p) => ({
             ...p,

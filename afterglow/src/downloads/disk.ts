@@ -9,6 +9,7 @@ async function request(path:string,body:unknown,signal?:AbortSignal,method='POST
 }
 export function createDiskDownload(name:string,batch:boolean,signal:AbortSignal):Promise<{id:string}>{return request('',{name,batch},signal);}
 export async function addDiskItem(id:string,index:number,title:string,asset:DownloadAsset,signal:AbortSignal) {
+  if(asset.bundledPath)return request('/'+id+'/items',{index,title,bundledPath:asset.bundledPath,subtitles:sidecars(asset)},signal);
   let file=asset.file,url=new URL(asset.url,location.href),headers=asset.headers||{};
   if(url.origin===location.origin&&url.pathname==='/__afterglow/audio'){
     if(url.searchParams.get('type')==='hls')throw new Error('HLS 播放流暂不能保存为单个音频');

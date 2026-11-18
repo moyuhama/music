@@ -1,3 +1,4 @@
+import { handleBundledLibrary } from "./bundled-library.mjs";
 import { handleDiskDownloads } from "./disk-downloads.mjs";
 import { handleResourceProxy } from "./resource-proxy.mjs";
 import http from "node:http";
@@ -66,6 +67,7 @@ if (action === "serve") {
     ".json": "application/json",
   };
   const server = http.createServer(async (req, res) => {
+    if (await handleBundledLibrary(req, res)) return;
     if (await handleDiskDownloads(req, res)) return;
     if (await handleResourceProxy(req, res)) return;
     if (await handleXimalayaProxy(req, res)) return;

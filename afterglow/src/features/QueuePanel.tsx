@@ -1,4 +1,4 @@
-import { X, Trash2, AudioLines, ListMusic, Play } from "lucide-react";
+import { Heart, X, Trash2, AudioLines, ListMusic, Play } from "lucide-react";
 import Cover from "../components/Cover";
 import { formatTime } from "../domain/types";
 import type { MusicController } from "./useMusic";
@@ -30,14 +30,14 @@ export default function QueuePanel({
       <div className="queue-list">
         {m.queue.length ? (
           m.queue.map((id) => {
-            const track = m.tracks.find((t) => t.id === id)!;
+            const track = m.playbackTracks.find((t) => t.id === id)!;
             return (
               <div
                 className={`queue-item ${id === m.state.trackId ? "active" : ""}`}
                 key={id}
               >
                 <button className="queue-song" onClick={() => m.play(track)}>
-                  <Cover src={track.cover} index={m.tracks.indexOf(track)} />
+                  <Cover src={track.cover} index={m.playbackTracks.indexOf(track)} />
                   <span>
                     <strong>{track.title}</strong>
                     <small>{track.artist}</small>
@@ -50,6 +50,7 @@ export default function QueuePanel({
                     {track.duration ? formatTime(track.duration) : "--:--"}
                   </span>
                 )}
+                <button className={`icon-button favorite ${track.favorite?"liked":""}`} aria-label={`${track.favorite?"取消收藏":"收藏"} ${track.title}`} onClick={()=>m.favorite(track.id)}><Heart size={15} fill={track.favorite?"currentColor":"none"}/></button>
                 <button
                   className="icon-button"
                   aria-label={`从队列移除 ${track.title}`}
