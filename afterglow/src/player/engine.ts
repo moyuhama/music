@@ -146,7 +146,9 @@ export class PlayerEngine {
         error:
           e instanceof DOMException && e.name === "NotAllowedError"
             ? "浏览器需要你点击播放按钮后才能播放。"
-            : e instanceof Error
+            : e instanceof DOMException && e.name === "NotSupportedError"
+              ? "音频地址已失效、源站拒绝访问或格式不受支持，请重新选择曲目或更新音源。"
+              : e instanceof Error
               ? e.message
               : "播放失败，请重试",
       });

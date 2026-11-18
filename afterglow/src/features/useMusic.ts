@@ -1,6 +1,6 @@
 import {saveLocalFile,loadLocalFile,removeLocalFile} from "../storage/local-files";
 import {loadBundledLibrary} from "./bundled-library";
-import {libraryTrack,migratePlaybackHistory,mergeBundled} from "../domain/library";
+import {libraryTrack,migratePlaybackHistory,mergeBundled,reconcileLegacyCatalog,remapTrackIds} from "../domain/library";
 import type {ResourcePlayback} from "./ResourceDiscovery";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Track, PlayMode, Playlist } from "../domain/types";
@@ -44,16 +44,17 @@ export function useMusic() {
         }));
         const base=mergeCatalog(savedTracks,saved?.catalogIds??[]);
         const bundled=await loadBundledLibrary(base.tracks);if(!live)return;
-        const merged=bundled?mergeBundled(base.tracks,bundled,base.catalogIds):base;
+        const reconciled=bundled?reconcileLegacyCatalog(base.tracks,bundled):{tracks:base.tracks,aliases:new Map<string,string>()};
+        const merged=bundled?mergeBundled(reconciled.tracks,bundled,base.catalogIds):base;
         setTracks(merged.tracks);
         setCatalogIds(merged.catalogIds);
         if (saved) {
-          setPlaylists(saved.playlists ?? []);
-          setQueue(saved.queue ?? []);
+          setPlaylists((saved.playlists ?? []).map(list=>({...list,trackIds:remapTrackIds(list.trackIds,reconciled.aliases)})));
+          setQueue(remapTrackIds(saved.queue ?? [],reconciled.aliases));
           setMode(saved.mode);
           player.setVolume(saved.volume);
           const selected =
-            merged.tracks.find((t) => t.id === saved.currentId) ??
+            merged.tracks.find((t) => t.id === (reconciled.aliases.get(saved.currentId??"")??saved.currentId)) ??
             [...merged.tracks]
               .sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0))
               .find(available) ??
