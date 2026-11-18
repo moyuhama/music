@@ -3,7 +3,7 @@ import {loadBundledLibrary} from "./bundled-library";
 import {libraryTrack,migratePlaybackHistory,mergeBundled,reconcileLegacyCatalog,remapTrackIds} from "../domain/library";
 import type {ResourcePlayback} from "./ResourceDiscovery";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import type { Track, PlayMode, Playlist } from "../domain/types";
+import type { Track, PlayMode, Playlist, Album, AlbumInfo } from "../domain/types";
 import { nextId, insertNext } from "../domain/types";
 import { player } from "../player/engine";
 import { libraryRepository } from "../storage";
@@ -14,6 +14,7 @@ import { mergeCatalog } from "../domain/catalog";
 export function useMusic() {
   const [catalogIds, setCatalogIds] = useState<string[]>([]);
   const [tracks, setTracks] = useState<Track[]>([]);
+  const [albums,setAlbums]=useState<Album[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [queue, setQueue] = useState<string[]>([]);
   const [mode, setMode] = useState<PlayMode>("sequence");
@@ -49,6 +50,7 @@ export function useMusic() {
         setTracks(merged.tracks);
         setCatalogIds(merged.catalogIds);
         if (saved) {
+          setAlbums(saved.albums??[]);
           setPlaylists((saved.playlists ?? []).map(list=>({...list,trackIds:remapTrackIds(list.trackIds,reconciled.aliases)})));
           setQueue(remapTrackIds(saved.queue ?? [],reconciled.aliases));
           setMode(saved.mode);
@@ -82,6 +84,7 @@ export function useMusic() {
         .save({
           tracks,
           catalogIds,
+          albums,
           playlists,
           queue,
           mode,
@@ -95,6 +98,7 @@ export function useMusic() {
     ready,
     tracks,
     catalogIds,
+    albums,
     playlists,
     queue,
     mode,
@@ -220,7 +224,7 @@ export function useMusic() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   });
-  async function importFiles(files: FileList | File[]) {
+  async function importFiles(files: FileList | File[], target?:AlbumInfo) {
     if (importLock.current) {
       notify("正在读取音乐，请稍候。");
       return;
@@ -260,9 +264,9 @@ export function useMusic() {
           ...existing,
           id,
           title: metadata.title || existing?.title || fallback,
-          artist: metadata.artist || existing?.artist || "未知歌手",
-          album: metadata.album || existing?.album || "未知专辑",
-          cover: metadata.cover || existing?.cover,
+          artist: metadata.artist || target?.artist || existing?.artist || "未知歌手",
+          album: target?.name || metadata.album || existing?.album || "未知专辑",
+          cover: target?.cover || metadata.cover || existing?.cover,
           duration: metadata.duration || existing?.duration,
           source: {
             kind: "local",
@@ -387,7 +391,15 @@ export function useMusic() {
     setQueue([]);
     player.stop();
   }
+  function createAlbum(info:AlbumInfo) {
+    const name=info.name.trim();
+    if(!name)throw new Error('请填写专辑名称');
+    if(albums.some(album=>album.name===name)||tracks.some(track=>track.album===name))throw new Error('已存在同名专辑，请选择已有专辑');
+    const album:Album={...info,name,id:crypto.randomUUID(),createdAt:Date.now()};
+    setAlbums(old=>[...old,album]);return album;
+  }
   function removeAlbum(album:string) {
+    setAlbums(old=>old.filter(item=>item.name!==album));
     const removed=tracks.filter(track=>libraryTrack(track)&&track.album===album);
     const ids=new Set(removed.map(track=>track.id));
     if(state.trackId&&ids.has(state.trackId))player.stop();
@@ -408,6 +420,8 @@ export function useMusic() {
     playbackTracks: tracks,
     tracks: tracks.filter(libraryTrack),
     playlists,
+    albums,
+    createAlbum,
     queue: ids,
     mode,
     setMode,

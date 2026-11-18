@@ -1,6 +1,7 @@
-import type { Track, PlayMode, Playlist } from "../domain/types";
+import type { Track, PlayMode, Playlist, Album } from "../domain/types";
 export interface SavedState {
   tracks: Track[];
+  albums?: Album[];
   catalogIds?: string[];
   volume: number;
   mode: PlayMode;

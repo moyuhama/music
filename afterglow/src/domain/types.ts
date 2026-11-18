@@ -30,6 +30,8 @@ export interface Track {
   lyrics?: LyricLine[];
   lyricText?: string;
 }
+export interface AlbumInfo {name:string;artist?:string;cover?:string}
+export interface Album extends AlbumInfo {id:string;createdAt:number}
 export interface Playlist {
   id: string;
   name: string;

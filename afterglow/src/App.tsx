@@ -33,6 +33,7 @@ import { useScrollMemory } from "./interactions/useScrollMemory";
 import MobileNavigation from "./features/MobileNavigation";
 import NowPlaying from "./features/NowPlaying";
 import ListeningModes from "./features/ListeningModes";
+import {CreateAlbumDialog,ImportAlbumDialog} from "./features/AlbumDialogs";
 import ResourceSettings from "./features/ResourceSettings";
 import ResourceDiscovery from "./features/ResourceDiscovery";
 import { useResources } from "./resources/useResources";
@@ -64,6 +65,9 @@ export default function App() {
   const [albumFilter, setAlbumFilter] = useState("");
   const [sort, setSort] = useState("added");
   const [remoteOpen, setRemoteOpen] = useState(false);
+  const [createAlbumOpen,setCreateAlbumOpen]=useState(false);
+  const [filesToImport,setFilesToImport]=useState<File[]|null>(null);
+  const [albumToImport,setAlbumToImport]=useState<string|undefined>();
   const [playlistOpen, setPlaylistOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(true);
   const [queueOpen, setQueueOpen] = useState(false);
@@ -120,7 +124,17 @@ export default function App() {
     name,
     tracks: filtered.filter((t) => (t.album || "未知专辑") === name),
   }));
-  const importClick = () => input.current?.click();
+  const importClick = () => {setAlbumToImport(undefined);input.current?.click();};
+  const importIntoAlbum=(name:string)=>{setAlbumToImport(name);input.current?.click();};
+  function stageImport(files:FileList|File[],album?:string){
+    const audio=Array.from(files).filter(file=>file.type.startsWith('audio/')||/\.(mp3|wav|ogg|m4a|aac|flac|opus|aiff|webm)$/i.test(file.name));
+    if(!audio.length){m.notify('请选择音频文件');return;}
+    setAlbumToImport(album);setFilesToImport(audio);
+  }
+  const importAlbums=[...new Set([...m.tracks.map(track=>track.album).filter((name):name is string=>!!name&&name!=='未知专辑'),...m.albums.map(album=>album.name)])].map(name=>{
+    const metadata=m.albums.find(album=>album.name===name),track=m.tracks.find(track=>track.album===name);
+    return {name,artist:metadata?.artist||track?.artist,cover:metadata?.cover||track?.cover};
+  });
   function changeView(value: View) {
     setPlayerView(false, () => {
       setView(value);
@@ -162,7 +176,7 @@ export default function App() {
         e.preventDefault();
         setDragging(false);
         if (e.dataTransfer.files.length)
-          void m.importFiles(e.dataTransfer.files);
+          stageImport(e.dataTransfer.files);
       }}
     >
       <div className="listening-ambience" aria-hidden="true" />
@@ -173,7 +187,7 @@ export default function App() {
         accept="audio/*,.flac,.m4a,.opus,.aiff"
         multiple
         onChange={(e) => {
-          if (e.target.files) void m.importFiles(e.target.files);
+          if (e.target.files) stageImport(e.target.files,albumToImport);
           e.target.value = "";
         }}
       />
@@ -184,7 +198,7 @@ export default function App() {
         multiple
         {...{ webkitdirectory: "" }}
         onChange={(e) => {
-          if (e.target.files) void m.importFiles(e.target.files);
+          if (e.target.files) stageImport(e.target.files,albumToImport);
           e.target.value = "";
         }}
       />
@@ -338,7 +352,10 @@ export default function App() {
             : view === "discovery" ? <ResourceDiscovery packages={resources.packages} onPlay={m.playResource} />
             : view === "modes" ? <ListeningModes
               music={m}
+              onCreateAlbum={()=>setCreateAlbumOpen(true)}
               onOpenAlbum={(album) => {
+                const albumTracks=m.tracks.filter(track=>track.album===album);
+                if(!albumTracks.length){importIntoAlbum(album);return;}
                 const tracks=m.tracks.filter(track=>track.album===album&&available(track));
                 if(!tracks.length){m.notify("这张专辑暂无可播放的歌曲，请重新导入文件或更新音源。");return;}
                 m.play(tracks[0],tracks.map(track=>track.id));
@@ -565,6 +582,8 @@ export default function App() {
           <QueuePanel music={m} onClose={() => setQueueOpen(false)} />
         </>
       )}
+      {createAlbumOpen&&<CreateAlbumDialog onClose={()=>setCreateAlbumOpen(false)} onCreate={info=>{m.createAlbum(info);setCreateAlbumOpen(false);}}/>}
+      {filesToImport&&<ImportAlbumDialog files={filesToImport} albums={importAlbums} initialAlbum={albumToImport} onClose={()=>setFilesToImport(null)} onImport={async(info,create)=>{if(create)m.createAlbum(info);await m.importFiles(filesToImport,info);setFilesToImport(null);}}/>}
       {remoteOpen && (
         <RemoteDialog
           onClose={() => setRemoteOpen(false)}
