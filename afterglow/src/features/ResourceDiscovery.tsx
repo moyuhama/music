@@ -1,9 +1,10 @@
+import {createPortal} from "react-dom";
 import {resourceMediaUrl} from "../resources/media";
 import { useDownloads } from "../downloads/Downloads";
 import { publicResourceUrl } from "../resources/policy";
 import type { DownloadAsset, DownloadItem } from "../downloads/files";
 import { useEffect, useRef, useState } from "react";
-import { Download, ArrowLeft, Search, Compass, Disc3, Play, ExternalLink, ChevronDown, RefreshCw, List, Grid2X2, LockKeyhole } from "lucide-react";
+import { LoaderCircle, Download, ArrowLeft, Search, Compass, Disc3, Play, ExternalLink, ChevronDown, RefreshCw, List, Grid2X2, LockKeyhole } from "lucide-react";
 import { runResource } from "../resources/client";
 import { resourceReference } from "../resources/policy";
 import type { ResourceBook, ResourceDetail, ResourceEpisode, ResourceMenu, ResourcePackage, ResourcePage, ResourceSource } from "../resources/types";
@@ -35,20 +36,23 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
   const [book, setBook] = useState<ResourceBook | null>(null);
   const [detail, setDetail] = useState<ResourceDetail | null>(null);
   const [busy, setBusy] = useState("");
+  const [resolvingUrl,setResolvingUrl] = useState("");
+  const resolvingAudio = busy === "正在解析音频…";
   const [error, setError] = useState("");
+  const [audioError,setAudioError] = useState(false);
   const pending = useRef<AbortController | null>(null);
   const retry = useRef<() => void>(() => {});
   useEffect(() => () => pending.current?.abort(), []);
   function begin(label: string) {
     pending.current?.abort();
     const controller = new AbortController(); pending.current = controller;
-    setBusy(label); setError(""); return controller;
+    setBusy(label); setError(""); setAudioError(false); return controller;
   }
   async function operation<T>(label: string, work: (signal: AbortSignal) => Promise<T>, apply: (value: T) => void) {
     retry.current = () => { void operation(label, work, apply); };
     const controller = begin(label);
     try { const value = await work(controller.signal); if (!controller.signal.aborted) apply(value); }
-    catch (e) { if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "音源加载失败"); }
+    catch (e) { if (!controller.signal.aborted) { setError(e instanceof Error ? e.message : "音源加载失败"); setAudioError(label === "正在解析音频…"); } }
     finally { if (!controller.signal.aborted) setBusy(""); }
   }
   function showPage(result: ResourcePage, source: ResourceSource) {
@@ -102,6 +106,7 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
   }
   function playEpisode(episode: ResourceEpisode) {
     if (!entry || !book) return;
+    setResolvingUrl(episode.url);
     void operation("正在解析音频…", (signal) => runResource<string | { url: string; headers?: Record<string, string> }>(entry.pkg, "audio", entry.source.id, [episode.url], signal), (result) => {
       const audio = typeof result === "string" ? { url: result } : result;
       const url = http(audio?.url, entry.source.url);
@@ -156,8 +161,8 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
         <div className="resource-filters" aria-label="分类筛选">{menus[menuIndex]?.tabs.map((tab, j) => <button key={tab.url + j} aria-pressed={activeTab === tab.url} onClick={() => browse(tab.url)}>{tab.title}</button>)}</div>
       </>}
       {book && <section className="resource-album-summary" aria-label="专辑信息"><div className="resource-book-cover">{book.coverUrl ? <img src={book.coverUrl} alt="" referrerPolicy="no-referrer" /> : <Disc3 size={36} />}</div><div><span>{entry.source.name}</span><strong>{book.artist || entry.source.name}</strong>{book.intro && <p>{book.intro}</p>}</div></section>}
-      {busy && <div className="resource-loading" role="status"><span>{busy}</span><button onClick={() => { pending.current?.abort(); setBusy(""); }}>取消</button></div>}
-      {error && <div className="resource-error-box" role="alert"><p>{error}</p><div><button onClick={() => retry.current()}>重试</button><a href={http(book?.bookUrl) || http(entry.source.url)} target="_blank" rel="noreferrer">打开来源网站<ExternalLink size={14} /></a></div></div>}
+      {busy && (resolvingAudio ? createPortal(<div className="resource-loading is-audio" role="status"><span>{busy}</span><button onClick={() => { pending.current?.abort(); setBusy(""); }}>取消</button></div>,document.body) : <div className="resource-loading" role="status"><span>{busy}</span><button onClick={() => { pending.current?.abort(); setBusy(""); }}>取消</button></div>)}
+      {error && (audioError ? createPortal(<div className="resource-error-box is-audio" role="alert"><p>{error}</p><div><button onClick={() => retry.current()}>重试</button><button onClick={()=>setError("")}>关闭</button><a href={http(book?.bookUrl) || http(entry.source.url)} target="_blank" rel="noreferrer">打开来源网站<ExternalLink size={14}/></a></div></div>,document.body) : <div className="resource-error-box" role="alert"><p>{error}</p><div><button onClick={() => retry.current()}>重试</button><a href={http(book?.bookUrl) || http(entry.source.url)} target="_blank" rel="noreferrer">打开来源网站<ExternalLink size={14}/></a></div></div>)}
       {!book && <div className={"resource-book-grid " + (layout === "list" ? "is-list" : "")}>{books.map((item, i) => <button className="resource-book-card" key={item.bookUrl + i} onClick={() => openBook(item)}>
         <span className="resource-book-cover">{item.coverUrl ? <img src={item.coverUrl} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Disc3 size={44} />}</span><strong>{item.title}</strong><small>{item.artist}</small>
       </button>)}</div>}
@@ -175,7 +180,7 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
         {selecting && <div className="batch-download-toolbar"><label><input type="checkbox" aria-label="全选当前章节" checked={!!detail.episodes.filter(e=>e.isFree!==false).length && detail.episodes.filter(e=>e.isFree!==false).every(e=>checked.has(e.url))} onChange={e=>setChecked(e.target.checked?new Set(detail.episodes.filter(e=>e.isFree!==false).map(e=>e.url)):new Set())}/>全选已加载章节</label><button className="secondary" disabled={downloads.busy || !checked.size} onClick={()=>downloads.start(detail.episodes.filter(e=>checked.has(e.url) && e.isFree!==false).map(episodeDownload),book.title)}><Download size={15}/>下载所选（{checked.size}）</button></div>}
         {detail.episodes.map((episode,i)=><div className="resource-episode" key={episode.url+i}>
           {selecting && <input type="checkbox" aria-label={`选择章节 ${episode.title}`} disabled={episode.isFree===false} checked={checked.has(episode.url)} onChange={e=>setChecked(old=>{const next=new Set(old);e.target.checked?next.add(episode.url):next.delete(episode.url);return next;})}/>}
-          <button className="resource-episode-play" disabled={!!busy || episode.isFree===false} onClick={()=>playEpisode(episode)}><span>{String(i+1).padStart(2,"0")}</span><strong>{episode.title}</strong>{episode.isFree===false?<><small>需来源授权</small><LockKeyhole size={15}/></>:<Play size={16}/>}</button>
+          <button className="resource-episode-play" disabled={(!!busy && !resolvingAudio) || episode.isFree===false} aria-busy={resolvingAudio && resolvingUrl===episode.url} onClick={()=>playEpisode(episode)}><span>{String(i+1).padStart(2,"0")}</span><strong>{episode.title}</strong>{episode.isFree===false?<><small>需来源授权</small><LockKeyhole size={15}/></>: resolvingAudio && resolvingUrl===episode.url ? <LoaderCircle size={16} className="spin"/> : <Play size={16}/>}</button>
           {!selecting && <button className="icon-button" aria-label={`下载 ${episode.title}`} disabled={downloads.busy || episode.isFree===false} onClick={()=>downloads.start([episodeDownload(episode)],episode.title)}><Download size={16}/></button>}
         </div>)}
         {!detail.episodes.length && <p className="resource-empty">这个专辑还没有可播放内容</p>}

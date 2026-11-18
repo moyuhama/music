@@ -40,5 +40,5 @@ export function useCoverPalette(src?: string) {
     image.src = src;
     return () => { live = false; image.onload = image.onerror = null; };
   }, [src]);
-  return (src && cache.get(src)) || (result.src === src ? result.palette : fallback);
+  return (src && cache.get(src)) || result.palette;
 }

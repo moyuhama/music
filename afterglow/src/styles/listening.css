@@ -342,3 +342,5 @@
 @media (prefers-reduced-motion: reduce) {
   .soda-app .player-page { transition: none; }
 }
+/* Only the page layer scrolls; focus must never scroll the outer sheet host. */
+.soda-app .app-main { overflow: clip; }

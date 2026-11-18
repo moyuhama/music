@@ -36,3 +36,10 @@ test('统一代理保留 POST 表单、最终地址和响应状态，隔离跨�
   assert.equal((await fetch(endpoint,{method:'POST',headers:{Origin:'https://untrusted.example'},body:'{}'})).status,403);assert.equal(calls,1);
  }finally{server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));}
 });
+import {resourceMediaUrl} from '../src/resources/media.ts';
+test('字符串音源返回空媒体请求头时仍可播放',()=>{
+ const old=Object.getOwnPropertyDescriptor(globalThis,'location');
+ Object.defineProperty(globalThis,'location',{configurable:true,value:{hostname:'127.0.0.1',origin:'http://127.0.0.1:4173'}});
+ try {assert.ok(resourceMediaUrl('https://a.xmcdn.com/audio.m4a',null).startsWith('http://127.0.0.1:4173/__afterglow/audio?'));}
+ finally {if(old)Object.defineProperty(globalThis,'location',old);else Reflect.deleteProperty(globalThis,'location');}
+});

@@ -1,3 +1,4 @@
+import {useRetainedCover} from "../interactions/useRetainedCover";
 import { useState } from "react";
 import { Disc3 } from "lucide-react";
 export default function Cover({
@@ -11,6 +12,8 @@ export default function Cover({
   large?: boolean;
   playerRole?: "mini" | "full";
 }) {
+  const retained = useRetainedCover(playerRole ? src : undefined);
+  const imageSrc = playerRole ? retained : src;
   const [failedSrc, setFailedSrc] = useState<string>();
   return (
     <div
@@ -18,12 +21,13 @@ export default function Cover({
       aria-hidden="true"
       data-player-cover={playerRole}
     >
-      {src && failedSrc !== src ? (
+      {imageSrc && failedSrc !== imageSrc ? (
         <img
-          src={src}
+          src={imageSrc}
+          referrerPolicy="no-referrer"
           alt=""
           loading={playerRole ? "eager" : "lazy"}
-          onError={() => setFailedSrc(src)}
+          onError={() => setFailedSrc(imageSrc)}
         />
       ) : (
         <>

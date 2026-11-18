@@ -29,7 +29,7 @@ export default function NowPlaying({ active, music: m, onClose, onImport, onRemo
     <section className={`listening-screen ${hasLyrics ? "has-lyrics" : "without-lyrics"}`} aria-label="播放首页">
       <div className="listening-composition">
         <div className="listening-record">
-          <div className="listening-artwork" key={track?.id ?? "empty"}>
+          <div className="listening-artwork">
             {track ? <Cover playerRole="full" src={track.cover} index={m.tracks.indexOf(track)} large /> : <Disc3 size={72} strokeWidth={.7} />}
           </div>
         <div className="listening-details">

@@ -1,3 +1,4 @@
+import {useRetainedCover} from "./interactions/useRetainedCover";
 import { useEffect, useRef, useState } from "react";
 import {
   AudioLines,
@@ -53,7 +54,8 @@ const viewNames = {
 export default function App() {
   const m = useMusic();
   const resources = useResources();
-  const palette = useCoverPalette(m.current?.cover);
+  const visualCover = useRetainedCover(m.current?.cover);
+  const palette = useCoverPalette(visualCover);
   const [view, setView] = useState<View>("all");
   useEffect(() => {
     if (resources.ready && !resources.hasSources && view === "discovery") setView("settings");
@@ -144,7 +146,7 @@ export default function App() {
       data-view={detailOpen ? "player" : view}
       style={
         {
-          "--listening-cover": m.current?.cover ? `url("${m.current.cover}")` : "none",
+          "--listening-cover": visualCover ? `url("${visualCover}")` : "none",
           "--cover-top": palette.top, "--cover-bottom": palette.bottom,
           "--cover-panel": palette.panel, "--cover-bar": palette.bar,
         } as React.CSSProperties
@@ -164,7 +166,7 @@ export default function App() {
           void m.importFiles(e.dataTransfer.files);
       }}
     >
-      <div className="listening-ambience" key={m.current?.cover ?? "empty"} aria-hidden="true" />
+      <div className="listening-ambience" aria-hidden="true" />
       <input
         ref={input}
         hidden
