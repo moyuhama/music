@@ -1,4 +1,5 @@
 import http from "node:http";
+import { handleAudioDownload } from "./audio-download.mjs";
 import { handleXimalayaProxy } from "./ximalaya-proxy.mjs";
 import fs from "node:fs";
 import path from "node:path";
@@ -64,6 +65,7 @@ if (action === "serve") {
   };
   const server = http.createServer(async (req, res) => {
     if (await handleXimalayaProxy(req, res)) return;
+    if (await handleAudioDownload(req, res)) return;
     const url = new URL(req.url, "http://127.0.0.1");
     if (url.pathname === "/__afterglow/status") {
       res.writeHead(200, {

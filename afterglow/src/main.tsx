@@ -1,3 +1,5 @@
+import { Downloads } from "./downloads/Downloads";
+import "./styles/downloads.css";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./styles/app.css";
@@ -7,4 +9,4 @@ import "./styles/interactions.css";
 import "./styles/listening.css";
 import "./styles/resources.css";
 import "./styles/sleep-timer.css";
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(<Downloads><App /></Downloads>);

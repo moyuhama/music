@@ -1,3 +1,4 @@
+import { handleAudioDownload } from "./audio-download.mjs";
 // Local-only adapter for public Ximalaya JSON APIs. Never forwards browser cookies.
 const route = "/__afterglow/ximalaya";
 export function ximalayaTarget(value) {
@@ -56,8 +57,8 @@ export async function handleXimalayaProxy(req, res, fetcher = fetch) {
   return true;
 }
 export function ximalayaProxyPlugin() {
-  const install = (server) => server.middlewares.use((req, res, next) => {
-    void handleXimalayaProxy(req, res).then((handled) => { if (!handled) next(); }).catch(next);
-  });
+  const install = (server) => { server.middlewares.use((req, res, next) => {
+    void handleXimalayaProxy(req, res).then(async (handled) => { if (!handled && !await handleAudioDownload(req, res)) next(); }).catch(next);
+  }); };
   return { name: "afterglow-local-ximalaya", configureServer: install, configurePreviewServer: install };
 }

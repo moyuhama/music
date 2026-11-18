@@ -1,4 +1,8 @@
+import { useState } from "react";
+import { useDownloads } from "../downloads/Downloads";
+import { trackDownload } from "../downloads/tracks";
 import {
+  Download,
   AudioLines,
   Heart,
   Play,
@@ -33,9 +37,17 @@ export default function TrackList({
   playlistId,
   onRemoveFromPlaylist,
 }: Props) {
+  const downloads = useDownloads();
+  const [selecting,setSelecting] = useState(false);
+  const [checked,setChecked] = useState<Set<string>>(new Set());
+  const downloadable = tracks.filter(available);
+  const chosen = downloadable.filter((track) => checked.has(track.id));
   const ids = tracks.filter(available).map((t) => t.id);
   return (
     <div className="track-table">
+      {!!tracks.length && <div className="batch-download-toolbar"><button className="secondary" onClick={()=>{setSelecting(!selecting);setChecked(new Set());}}>{selecting ? "退出多选" : <><Download size={15}/>批量下载</>}</button>
+        {selecting && <><label><input type="checkbox" aria-label="全选当前歌曲" checked={!!downloadable.length && chosen.length===downloadable.length} onChange={e=>setChecked(e.target.checked?new Set(downloadable.map(t=>t.id)):new Set())}/>全选当前列表</label><button className="secondary" disabled={!chosen.length || downloads.busy} onClick={()=>downloads.start(chosen.map(trackDownload),"音乐下载")}><Download size={15}/>下载所选（{chosen.length}）</button></>}
+      </div>}
       <div className="table-header">
         <span>#</span>
         <span>歌曲标题</span>
@@ -52,6 +64,7 @@ export default function TrackList({
             onDoubleClick={() => m.play(track, ids)}
           >
             <div className="track-number">
+              {selecting ? <input type="checkbox" aria-label={`选择歌曲 ${track.title}`} disabled={!available(track)} checked={checked.has(track.id)} onChange={e=>setChecked(old=>{const next=new Set(old);e.target.checked?next.add(track.id):next.delete(track.id);return next;})}/> : <>
               <button
                 className="row-play-button"
                 aria-label={`播放 ${track.title}`}
@@ -68,7 +81,7 @@ export default function TrackList({
                     <Play size={13} fill="currentColor" />
                   </>
                 )}
-              </button>
+              </button></>}
             </div>
             <div className="track-title-cell">
               <button
@@ -125,6 +138,7 @@ export default function TrackList({
                     details?.removeAttribute("open");
                 }}
               >
+                <button disabled={downloads.busy || !available(track)} onClick={()=>downloads.start([trackDownload(track)],track.title)}><Download size={15}/>下载{track.lyricText || track.lyrics?.length ? "（含歌词）" : ""}</button>
                 <button onClick={() => m.playNext(track)}>
                   <CornerDownRight size={15} />
                   下一首播放

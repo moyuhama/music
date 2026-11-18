@@ -22,7 +22,7 @@ export interface ResourceBook {
   artist?: string;
   intro?: string;
 }
-export interface ResourceEpisode { title: string; url: string; isFree?: boolean }
+export interface ResourceEpisode { title: string; url: string; isFree?: boolean; lyricText?: string; subtitles?: {text:string;format:"lrc"|"srt"|"vtt"|"txt"}[] }
 export interface ResourceDetail extends Partial<ResourceBook> { episodes: ResourceEpisode[] }
 export interface ResourceMenu { title: string; tabs: { title: string; url: string }[] }
 export interface ResourcePage { books: ResourceBook[]; currentPage?: number; totalPage?: number; nextUrl?: string }

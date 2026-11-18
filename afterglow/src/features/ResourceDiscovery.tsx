@@ -1,5 +1,8 @@
+import { useDownloads } from "../downloads/Downloads";
+import { publicResourceUrl } from "../resources/policy";
+import type { DownloadAsset, DownloadItem } from "../downloads/files";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Search, Compass, Disc3, Play, ExternalLink, ChevronDown, RefreshCw, List, Grid2X2, LockKeyhole } from "lucide-react";
+import { Download, ArrowLeft, Search, Compass, Disc3, Play, ExternalLink, ChevronDown, RefreshCw, List, Grid2X2, LockKeyhole } from "lucide-react";
 import { runResource } from "../resources/client";
 import { resourceReference } from "../resources/policy";
 import type { ResourceBook, ResourceDetail, ResourceEpisode, ResourceMenu, ResourcePackage, ResourcePage, ResourceSource } from "../resources/types";
@@ -10,6 +13,9 @@ function http(value: unknown, base?: string) {
 }
 export interface ResourcePlayback { url: string; title: string; artist: string; album: string; cover?: string }
 export default function ResourceDiscovery({ packages, onPlay }: { packages: ResourcePackage[]; onPlay(track: ResourcePlayback): void }) {
+  const downloads = useDownloads();
+  const [selecting,setSelecting] = useState(false);
+  const [checked,setChecked] = useState<Set<string>>(new Set());
   const entries = packages.flatMap((pkg) => pkg.sources.map((source) => ({ pkg, source, key: pkg.id + "/" + source.id })));
   const [selected, setSelected] = useState(() => {
     try { const saved = localStorage.getItem("afterglow-resource-source"); return entries.some((item) => item.key === saved) ? saved! : ""; } catch { return ""; }
@@ -82,7 +88,7 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
   }
   function openBook(item: ResourceBook, full = false) {
     if (!entry) return;
-    setBook(item); if (!full) setDetail(null);
+    setBook(item); if (!full) { setDetail(null); setSelecting(false); setChecked(new Set()); }
     void operation(full ? "正在加载完整目录…" : "正在加载目录…", (signal) => runResource<ResourceDetail>(entry.pkg, "bookDetail", entry.source.id, [item.bookUrl, true, full], signal), (result) => {
       if (!result || !Array.isArray(result.episodes)) throw new Error("音源没有返回有效目录");
       setFullDetail(full);
@@ -90,7 +96,7 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
         artist: typeof result.artist === "string" && result.artist ? result.artist : item.artist,
         coverUrl: http(result.coverUrl, entry.source.url) || item.coverUrl,
         intro: typeof result.intro === "string" ? result.intro.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 1200) : item.intro });
-      setDetail({ episodes: result.episodes.slice(0, 3000).filter((episode) => typeof episode.title === "string" && resourceReference(episode.url, entry.source.url)).map((episode) => ({ title: episode.title, url: resourceReference(episode.url, entry.source.url), isFree: typeof episode.isFree === "boolean" ? episode.isFree : undefined })) });
+      setDetail({ episodes: result.episodes.slice(0, 3000).filter((episode) => typeof episode.title === "string" && resourceReference(episode.url, entry.source.url)).map((episode) => ({ title: episode.title, url: resourceReference(episode.url, entry.source.url), isFree: typeof episode.isFree === "boolean" ? episode.isFree : undefined, lyricText: typeof episode.lyricText === "string" ? episode.lyricText : undefined, subtitles: Array.isArray(episode.subtitles) ? episode.subtitles.filter(item => typeof item.text === "string" && ["lrc","srt","vtt","txt"].includes(item.format)) : undefined })) });
     });
   }
   function playEpisode(episode: ResourceEpisode) {
@@ -103,6 +109,15 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
       if (audio && "headers" in audio && audio.headers && Object.keys(audio.headers).length) throw new Error("此音源播放需要专用请求头，当前网页版暂不支持");
       onPlay({ url, title: episode.title === "直播" ? book.title : episode.title, artist: book.artist || entry.source.name, album: book.title, cover: book.coverUrl });
     });
+  }
+  function episodeDownload(episode: ResourceEpisode): DownloadItem {
+    const current = entry!;
+    return {id:episode.url,title:episode.title,async resolve(signal) {
+      const result = await runResource<string | (DownloadAsset & {headers?:Record<string,string>})>(current.pkg,"audio",current.source.id,[episode.url],signal);
+      const audio = typeof result === "string" ? {url:result} : result;
+      if (audio.headers && Object.keys(audio.headers).length) throw new Error("此音源下载需要专用请求头，当前暂不支持");
+      return {...audio,url:publicResourceUrl(audio.url),lyricText:audio.lyricText || episode.lyricText,subtitles:[...(audio.subtitles || []),...(episode.subtitles || [])]};
+    }};
   }
   function back() {
     pending.current?.abort(); setBusy(""); setError("");
@@ -153,7 +168,20 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
         {(page.totalPage || 1) > (page.currentPage || 1) && <button className="secondary" onClick={() => search(searching, (page.currentPage || 1) + 1)}>下一页</button>}
       </div>}
       {!book && !busy && !searching && resourceReference(page.nextUrl, entry.source.url) && <button className="secondary" onClick={() => browse(resourceReference(page.nextUrl, entry.source.url))}>下一页</button>}
-      {book && detail && <div className="resource-episodes"><div className="resource-directory-heading"><p>已加载 {detail.episodes.length} 集</p>{entry.source.multipleEpisodePages && !fullDetail && <button className="secondary" disabled={!!busy} onClick={() => openBook(book, true)}>加载完整目录</button>}</div>{detail.episodes.map((episode, i) => <button disabled={!!busy || episode.isFree === false} onClick={() => playEpisode(episode)} key={episode.url + i}><span>{String(i + 1).padStart(2, "0")}</span><strong>{episode.title}</strong>{episode.isFree === false ? <><small>需来源授权</small><LockKeyhole size={15} /></> : <Play size={16} />}</button>)}{!detail.episodes.length && <p className="resource-empty">这个专辑还没有可播放内容</p>}</div>}
+      {book && detail && <div className="resource-episodes">
+        <div className="resource-directory-heading"><p>已加载 {detail.episodes.length} 集</p><div className="resource-directory-actions">
+          {entry.source.multipleEpisodePages && !fullDetail && <button className="secondary" disabled={!!busy} onClick={() => openBook(book, true)}>加载完整目录</button>}
+          <button className="secondary" onClick={()=>{setSelecting(!selecting);setChecked(new Set());}}>{selecting ? "退出多选" : "批量下载"}</button>
+        </div></div>
+        {selecting && <div className="batch-download-toolbar"><label><input type="checkbox" aria-label="全选当前章节" checked={!!detail.episodes.filter(e=>e.isFree!==false).length && detail.episodes.filter(e=>e.isFree!==false).every(e=>checked.has(e.url))} onChange={e=>setChecked(e.target.checked?new Set(detail.episodes.filter(e=>e.isFree!==false).map(e=>e.url)):new Set())}/>全选已加载章节</label><button className="secondary" disabled={downloads.busy || !checked.size} onClick={()=>downloads.start(detail.episodes.filter(e=>checked.has(e.url) && e.isFree!==false).map(episodeDownload),book.title)}><Download size={15}/>下载所选（{checked.size}）</button></div>}
+        {detail.episodes.map((episode,i)=><div className="resource-episode" key={episode.url+i}>
+          {selecting && <input type="checkbox" aria-label={`选择章节 ${episode.title}`} disabled={episode.isFree===false} checked={checked.has(episode.url)} onChange={e=>setChecked(old=>{const next=new Set(old);e.target.checked?next.add(episode.url):next.delete(episode.url);return next;})}/>}
+          <button className="resource-episode-play" disabled={!!busy || episode.isFree===false} onClick={()=>playEpisode(episode)}><span>{String(i+1).padStart(2,"0")}</span><strong>{episode.title}</strong>{episode.isFree===false?<><small>需来源授权</small><LockKeyhole size={15}/></>:<Play size={16}/>}</button>
+          {!selecting && <button className="icon-button" aria-label={`下载 ${episode.title}`} disabled={downloads.busy || episode.isFree===false} onClick={()=>downloads.start([episodeDownload(episode)],episode.title)}><Download size={16}/></button>}
+        </div>)}
+        {!detail.episodes.length && <p className="resource-empty">这个专辑还没有可播放内容</p>}
+      </div>}
+
     </>}
   </section>;
 }
