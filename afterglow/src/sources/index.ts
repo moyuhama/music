@@ -3,6 +3,7 @@ const files = new Map<string, File>();
 export function registerFile(id: string, file: File) {
   files.set(id, file);
 }
+export function registeredFile(key: string) { return files.get(key); }
 export function forgetFile(id: string) {
   files.delete(id);
 }

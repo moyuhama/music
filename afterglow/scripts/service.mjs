@@ -1,3 +1,4 @@
+import { handleDiskDownloads } from "./disk-downloads.mjs";
 import { handleResourceProxy } from "./resource-proxy.mjs";
 import http from "node:http";
 import { handleAudioDownload } from "./audio-download.mjs";
@@ -65,6 +66,7 @@ if (action === "serve") {
     ".json": "application/json",
   };
   const server = http.createServer(async (req, res) => {
+    if (await handleDiskDownloads(req, res)) return;
     if (await handleResourceProxy(req, res)) return;
     if (await handleXimalayaProxy(req, res)) return;
     if (await handleAudioDownload(req, res)) return;

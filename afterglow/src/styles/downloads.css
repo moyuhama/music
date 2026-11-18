@@ -24,3 +24,4 @@
   .resource-episode > .resource-episode-play { padding:16px 2px; gap:8px; }
   .resource-episode-play > span { flex-basis:24px; }
 }
+.download-save-link { display:inline-block; margin:0 0 10px; color:#eee; font-size:12px; text-decoration:underline; text-underline-offset:3px; }

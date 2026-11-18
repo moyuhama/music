@@ -1,9 +1,10 @@
+import {audioExtension} from "./format.mjs";
+export {safeName,audioExtension} from "./format.mjs";
 import {resourceMediaUrl} from "../resources/media.ts";
 import { Zip, ZipPassThrough, strToU8 } from "fflate";
 import type { LyricLine } from "../domain/types";
-export interface DownloadAsset { url: string; fileName?: string; headers?: Record<string,string>; release?(): void; lyricText?: string; lyrics?: LyricLine[]; subtitles?: { text: string; format: "lrc" | "srt" | "vtt" | "txt" }[] }
+export interface DownloadAsset { url: string; file?: Blob; fileName?: string; headers?: Record<string,string>; release?(): void; lyricText?: string; lyrics?: LyricLine[]; subtitles?: { text: string; format: "lrc" | "srt" | "vtt" | "txt" }[] }
 export interface DownloadItem { id: string; title: string; resolve(signal: AbortSignal): Promise<DownloadAsset> }
-export function safeName(value: string) { return value.replace(/[\\/:*?"<>|\x00-\x1f]/g, "_").replace(/[. ]+$/g, "").slice(0, 140) || "音频"; }
 export function lrcText(lines: LyricLine[]) {
   return lines.filter((line) => Number.isFinite(line.time) && line.time >= 0).map((line) => {
     const cs = Math.round(line.time * 100);
@@ -15,11 +16,6 @@ export function sidecars(asset: DownloadAsset) {
   const lyrics = (typeof asset.lyricText === "string" ? asset.lyricText.trim() : "") || (Array.isArray(asset.lyrics) && asset.lyrics.length ? lrcText(asset.lyrics) : "");
   if (lyrics && !result.some((item) => item.text === lyrics)) result.unshift({ text: lyrics, format: /\[\d+:\d+/.test(lyrics) ? "lrc" : "txt" });
   return result;
-}
-export function audioExtension(url: string, mime: string) {
-  const known: Record<string,string> = { "audio/mp4": "m4a", "audio/mpeg": "mp3", "audio/flac": "flac", "audio/x-flac": "flac", "audio/wav": "wav", "audio/x-wav": "wav", "audio/ogg": "ogg", "audio/aac": "aac", "audio/webm": "webm" };
-  const path = new URL(url, "https://example.com").pathname;
-  return known[mime.split(";")[0].toLowerCase()] || /\.(mp3|m4a|flac|wav|ogg|aac|webm|opus)$/i.exec(path)?.[1].toLowerCase() || "audio";
 }
 export function downloadUrl(url: string, headers: Record<string,string> = {}) {
   const target = new URL(url,location.href);
