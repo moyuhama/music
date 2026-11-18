@@ -1,50 +1,14 @@
 import { newQuickJSAsyncWASMModuleFromVariant, newVariant } from "quickjs-emscripten-core";
 import variant from "@jitl/quickjs-wasmfile-release-asyncify";
 import wasmUrl from "@jitl/quickjs-wasmfile-release-asyncify/wasm?url";
-import { parseHTML } from "linkedom";
 import bootstrap from "./bootstrap.js?raw";
 import type { ResourcePackage, ResourceMethod } from "./types";
 import { executeResource } from "./sandbox";
 import { publicResourceUrl as publicUrl } from "./policy";
-import { resourceCrypto } from "./crypto";
+import { createResourceDom } from "./dom";
 
-const nodes = new Map<number, { node: any; base: string }>();
-let nextNode = 1, parsedSize = 0, downloadedSize = 0, domCalls = 0;
-const keep = (node: any, base: string): number => {
-  if (!node) return 0;
-  if (nextNode > 30000) throw new Error("音源页面节点过多");
-  const id = nextNode++; nodes.set(id, { node, base }); return id;
-};
-function dom(op: string, args: any[]): unknown {
-  if (++domCalls > 20000) throw new Error("音源解析次数过多");
-  if (op === "parse") {
-    parsedSize += String(args[0]).length;
-    if (parsedSize > 12 * 1024 * 1024) throw new Error("音源页面过大");
-    return keep(parseHTML(String(args[0])).document, String(args[1]));
-  }
-  if (op === "decode") return parseHTML("<html><body></body></html>").document.createRange().createContextualFragment(String(args[0])).textContent;
-  if (op === "base64Decode") return new TextDecoder().decode(Uint8Array.from(atob(String(args[0])), (char) => char.charCodeAt(0)));
-  if (op === "base64Encode") return btoa(Array.from(new TextEncoder().encode(String(args[0])), (byte) => String.fromCharCode(byte)).join(""));
-  if (op === "userAgent") return navigator.userAgent;
-  if (["md5", "sha256", "aesEcbDecrypt"].includes(op)) return resourceCrypto(op, args);
-  if (op === "uuid") return crypto.randomUUID();
-  const entry = nodes.get(args[0]);
-  const node = entry?.node, base = entry?.base ?? "";
-  switch (op) {
-    case "text": return (node?.textContent ?? "").trim();
-    case "ownText": return Array.from(node?.childNodes ?? []).filter((n: any) => n.nodeType === 3).map((n: any) => n.textContent).join("").trim();
-    case "attr": return node?.getAttribute?.(args[1]) ?? "";
-    case "absUrl": { const value = node?.getAttribute?.(args[1]); if (!value) return ""; try { return new URL(value, base).href; } catch { return ""; } }
-    case "html": return node?.innerHTML ?? "";
-    case "outerHtml": return node?.outerHTML ?? "";
-    case "first": return keep(node?.querySelector?.(args[1]), base);
-    case "select": return Array.from(node?.querySelectorAll?.(args[1]) ?? []).slice(0, 3000).map((item) => keep(item, base));
-    case "parent": return keep(node?.parentElement, base);
-    case "children": return Array.from(node?.children ?? []).map((item) => keep(item, base));
-    default: throw new Error("不支持的网页解析操作");
-  }
-}
-let requests = 0;
+const { dom, clear } = createResourceDom(() => navigator.userAgent);
+let requests = 0, downloadedSize = 0;
 async function request(url: unknown, options: any = {}, readBody = true) {
   if (++requests > 24) throw new Error("此操作请求过多，请缩小搜索范围");
   const href = publicUrl(url);
@@ -60,18 +24,23 @@ async function request(url: unknown, options: any = {}, readBody = true) {
   }
   const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 12000);
   try {
-    const target = new URL(href);
-    const localProxy = ["127.0.0.1", "localhost"].includes(location.hostname) &&
-      ((target.hostname === "mobile.ximalaya.com" && (target.pathname === "/mobile/v1/album/track" || /^\/mobile\/others\/ca\/album\/track\//.test(target.pathname))) ||
-       (target.hostname === "www.ximalaya.com" && (["/revision/album/v1/simple", "/revision/category/allCategoryInfo", "/revision/category/queryCategoryPageAlbums"].includes(target.pathname) || /^\/mobile-playpage\/track\/v3\/baseInfo\//.test(target.pathname)))) &&
-      (!options.method || options.method === "GET");
-    const requestUrl = localProxy ? "/__afterglow/ximalaya?url=" + encodeURIComponent(href) : href;
-    const response = await fetch(requestUrl, {
+    const localProxy = ["127.0.0.1", "localhost"].includes(location.hostname);
+    if (localProxy && new URL(href).hostname === "music.163.com" && new URL(href).pathname === "/api/nuser/account/get") throw new Error("当前网页版尚未接入网易云账号登录，请使用推荐或公开歌单");
+    const sourceHeaders = Object.fromEntries(headers);
+    if (localProxy) for (const [key,value] of Object.entries(options.headers ?? {})) {
+      if (/^(user-agent|referer)$/i.test(key)) sourceHeaders[key] = String(value);
+    }
+    if (localProxy && options.body && !sourceHeaders["content-type"] && !options.contentType) sourceHeaders["content-type"] = "application/x-www-form-urlencoded";
+    const response = await fetch(localProxy ? "/__afterglow/resource" : href, localProxy ? {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({url:href,method:options.method||"GET",body:options.body,headers:sourceHeaders,readBody}), signal:controller.signal,
+    } : {
       method: options.method || "GET", body: options.body, headers,
       credentials: "omit", referrerPolicy: "no-referrer", signal: controller.signal,
     });
-    if (!localProxy) publicUrl(response.url);
-    const finalUrl = localProxy ? href : response.url;
+    if (response.headers.get("X-Afterglow-Error")) throw new Error((await response.json()).error || "本地音源请求失败");
+    const finalUrl = localProxy ? decodeURIComponent(response.headers.get("X-Afterglow-Url") || encodeURIComponent(href)) : response.url;
+    publicUrl(finalUrl);
     if (!readBody) {
       await response.body?.cancel();
       return { status: response.status, body: "", url: finalUrl, headers: Object.fromEntries(response.headers) };
@@ -108,7 +77,7 @@ async function io(op: string, args: any[]) {
   const result = await request(args[0], args[1], op !== "status" && op !== "finalUrl");
   if (op === "status") return result.status;
   if (op === "fetch") return result;
-  if (result.status < 200 || result.status >= 300) throw Object.assign(new Error("音源网站返回 HTTP " + result.status), { status: result.status });
+  if (result.status < 200 || result.status >= 300) throw Object.assign(new Error(result.status === 403 ? "音源网站拒绝请求（HTTP 403），可能需要网站验证或登录" : "音源网站返回 HTTP " + result.status), { status: result.status });
   if (op === "finalUrl") return result.url;
   return result.body;
 }
@@ -120,5 +89,5 @@ onmessage = async (event: MessageEvent<{ pkg: ResourcePackage; method: ResourceM
     postMessage({ result });
   } catch (e) {
     postMessage({ error: e instanceof Error ? e.message : "资源包脚本运行失败" });
-  } finally { nodes.clear(); }
+  } finally { clear(); }
 };

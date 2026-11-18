@@ -111,7 +111,21 @@ export class PlayerEngine {
       }
       this.source = source;
       this.pendingSeek = startTime > 0 ? startTime : null;
-      this.audio.src = source.url;
+      if (/[?&]type=hls(?:&|$)|\.m3u8(?:$|[?#])/i.test(source.url) && !this.audio.canPlayType?.("application/vnd.apple.mpegurl")) {
+        const { default: Hls } = await import("hls.js");
+        if (revision !== this.revision || controller.signal.aborted) return;
+        if (!Hls.isSupported()) throw new Error("当前浏览器不支持此音源的 HLS 格式");
+        const hls = new Hls({ enableWorker: false });
+        this.source = { release: () => { hls.destroy(); source.release(); } };
+        await new Promise<void>((resolve,reject) => {
+          const abort = () => { hls.destroy(); reject(new DOMException("已取消", "AbortError")); };
+          controller.signal.addEventListener("abort",abort,{once:true});
+          hls.on(Hls.Events.MANIFEST_PARSED,()=>{controller.signal.removeEventListener("abort",abort);resolve();});
+          hls.on(Hls.Events.ERROR,(_event,data)=>{if(data.fatal){controller.signal.removeEventListener("abort",abort);hls.destroy();if(revision === this.revision)this.update({status:"error",error:"HLS 音源加载失败："+data.details});reject(new Error("HLS 音源加载失败："+data.details));}});
+          hls.attachMedia(this.audio); hls.loadSource(source.url);
+        });
+      } else this.audio.src = source.url;
+      if (revision !== this.revision || controller.signal.aborted) return;
       await this.audio.play();
     } catch (e) {
       if (

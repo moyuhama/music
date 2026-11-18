@@ -1,3 +1,4 @@
+import {resourceMediaUrl} from "../resources/media";
 import { useDownloads } from "../downloads/Downloads";
 import { publicResourceUrl } from "../resources/policy";
 import type { DownloadAsset, DownloadItem } from "../downloads/files";
@@ -60,7 +61,7 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
   }
   const identity = entry ? entry.key + ":" + entry.pkg.importedAt : "";
   useEffect(() => {
-    setMenus([]); setBooks([]); setBook(null); setDetail(null); setQuery(""); setSearching(""); setActiveTab(""); setError(""); setMenuIndex(0);
+    setMenus([]); setBooks([]); setPage({books:[]}); setBook(null); setDetail(null); setQuery(""); setSearching(""); setActiveTab(""); setError(""); setMenuIndex(0);
     pending.current?.abort(); setBusy("");
     if (!entry) return;
     try { localStorage.setItem("afterglow-resource-source", entry.key); } catch {}
@@ -78,12 +79,12 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
   }, [identity, reloadVersion]);
   function browse(url: string) {
     if (!entry) return;
-    setSearching(""); setActiveTab(url);
+    setSearching(""); setActiveTab(url); setPage({books:[]}); setBooks([]);
     void operation("正在加载内容…", (signal) => runResource<ResourcePage>(entry.pkg, "categoryPage", entry.source.id, [url], signal), (result) => showPage(result, entry.source));
   }
   function search(text: string, number = 1) {
     if (!entry || !text.trim()) return;
-    setSearching(text.trim()); setActiveTab("");
+    setSearching(text.trim()); setActiveTab(""); setPage({books:[]}); setBooks([]);
     void operation("正在搜索…", (signal) => runResource<ResourcePage>(entry.pkg, "search", entry.source.id, [text.trim(), number], signal), (result) => showPage({ ...result, currentPage: result.currentPage || number }, entry.source));
   }
   function openBook(item: ResourceBook, full = false) {
@@ -106,8 +107,7 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
       const url = http(audio?.url, entry.source.url);
       if (!url) throw new Error("音源没有返回可播放的音频地址");
       if (location.protocol === "https:" && url.startsWith("http:")) throw new Error("此音频仅提供 HTTP 地址，HTTPS 网页无法播放，请打开来源网站收听");
-      if (audio && "headers" in audio && audio.headers && Object.keys(audio.headers).length) throw new Error("此音源播放需要专用请求头，当前网页版暂不支持");
-      onPlay({ url, title: episode.title === "直播" ? book.title : episode.title, artist: book.artist || entry.source.name, album: book.title, cover: book.coverUrl });
+      onPlay({ url: resourceMediaUrl(url, "headers" in audio ? audio.headers : undefined), title: episode.title === "直播" ? book.title : episode.title, artist: book.artist || entry.source.name, album: book.title, cover: book.coverUrl });
     });
   }
   function episodeDownload(episode: ResourceEpisode): DownloadItem {
@@ -115,7 +115,6 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
     return {id:episode.url,title:episode.title,async resolve(signal) {
       const result = await runResource<string | (DownloadAsset & {headers?:Record<string,string>})>(current.pkg,"audio",current.source.id,[episode.url],signal);
       const audio = typeof result === "string" ? {url:result} : result;
-      if (audio.headers && Object.keys(audio.headers).length) throw new Error("此音源下载需要专用请求头，当前暂不支持");
       return {...audio,url:publicResourceUrl(audio.url),lyricText:audio.lyricText || episode.lyricText,subtitles:[...(audio.subtitles || []),...(episode.subtitles || [])]};
     }};
   }
@@ -163,11 +162,11 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
         <span className="resource-book-cover">{item.coverUrl ? <img src={item.coverUrl} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Disc3 size={44} />}</span><strong>{item.title}</strong><small>{item.artist}</small>
       </button>)}</div>}
       {!book && !busy && !error && !books.length && <p className="resource-empty">{searching ? "没有找到相关内容" : "选择分类或搜索内容"}</p>}
-      {!book && !busy && searching && <div className="resource-pagination">
+      {!book && !busy && !error && searching && <div className="resource-pagination">
         {(page.currentPage || 1) > 1 && <button className="secondary" onClick={() => search(searching, (page.currentPage || 1) - 1)}>上一页</button>}
         {(page.totalPage || 1) > (page.currentPage || 1) && <button className="secondary" onClick={() => search(searching, (page.currentPage || 1) + 1)}>下一页</button>}
       </div>}
-      {!book && !busy && !searching && resourceReference(page.nextUrl, entry.source.url) && <button className="secondary" onClick={() => browse(resourceReference(page.nextUrl, entry.source.url))}>下一页</button>}
+      {!book && !busy && !error && !searching && resourceReference(page.nextUrl, entry.source.url) && <button className="secondary" onClick={() => browse(resourceReference(page.nextUrl, entry.source.url))}>下一页</button>}
       {book && detail && <div className="resource-episodes">
         <div className="resource-directory-heading"><p>已加载 {detail.episodes.length} 集</p><div className="resource-directory-actions">
           {entry.source.multipleEpisodePages && !fullDetail && <button className="secondary" disabled={!!busy} onClick={() => openBook(book, true)}>加载完整目录</button>}

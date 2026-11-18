@@ -8,7 +8,7 @@ export function runResource<T>(pkg: ResourcePackage, method: ResourceMethod, sou
     const timer = setTimeout(() => { cleanup(); reject(new Error("音源响应超时，请稍后重试")); }, 25000);
     worker.onmessage = (event) => {
       cleanup();
-      if (event.data.error) reject(new Error(event.data.error));
+      if (event.data.error) reject(new Error(/还没有登录|到[“"「]?插件|需要登录.*网易云/.test(event.data.error) ? "此音源需要网站登录，当前网页版尚未接入该站账号" : event.data.error));
       else resolve(event.data.result);
     };
     worker.onerror = () => { cleanup(); reject(new Error("音源运行失败，请检查资源包后重试")); };

@@ -38,6 +38,9 @@ function __ioCall(op, args) {
 }
 function __node(id) {
   return {
+    tag: function () { return __domCall("tag", [id]); },
+    hasClass: function (name) { return __domCall("hasClass", [id, name]); },
+    byId: function (name) { return __node(__domCall("byId", [id, name])); },
     exists: function () { return !!id; },
     text: function () { return __domCall("text", [id]); },
     ownText: function () { return __domCall("ownText", [id]); },

@@ -1,0 +1,356 @@
+{
+  "date": "2026-11-18",
+  "package": "ShunSources v5.6",
+  "scope": "每个音源首个分类及首个内容；可免费播放的首个章节。解析成功不等于完整曲库可播放。",
+  "sources": [
+    {
+      "name": "乐听吧",
+      "id": "f04408546017411c890d4d72325a67ec",
+      "menus": 1,
+      "books": 16,
+      "episodes": 217,
+      "audio": true,
+      "audioHeaders": []
+    },
+    {
+      "name": "一夜幻听",
+      "id": "488676f5ccf8455aa7770cbd197fd500",
+      "menus": 1,
+      "books": 16,
+      "episodes": 770,
+      "audio": true,
+      "audioHeaders": []
+    },
+    {
+      "name": "13听书网",
+      "id": "7c2e9a41d05b4f3e8a6d1b9c3f2e7a58",
+      "menus": 2,
+      "books": 6,
+      "episodes": 60,
+      "audioError": "此音源需要浏览器音频嗅探，当前网页版暂不支持"
+    },
+    {
+      "name": "单田芳评书网",
+      "id": "accbef4f823c4cc9ae76ba24688c67f6",
+      "menus": 1,
+      "books": 83,
+      "episodes": 400,
+      "audio": true,
+      "audioHeaders": []
+    },
+    {
+      "name": "听书网",
+      "id": "f2b9d4a61c7e48f3a5d08e3b7c1a9d54",
+      "menus": 1,
+      "books": 60,
+      "episodes": 411,
+      "audio": true,
+      "audioHeaders": [
+        "Referer"
+      ]
+    },
+    {
+      "name": "博看有声",
+      "id": "c98a21452583434da5cfef8be16b71d6",
+      "menus": 2,
+      "books": 24,
+      "episodes": 9,
+      "audio": true,
+      "audioHeaders": []
+    },
+    {
+      "name": "懒人听书",
+      "id": "4a3ed84e5cf841609ed4d7f790fc7fbf",
+      "menus": 5,
+      "books": 0
+    },
+    {
+      "name": "书音FM",
+      "id": "e8c2a5d47f1b4936b0d7a3c9e6f41b05",
+      "menus": 12,
+      "books": 20,
+      "episodes": 313,
+      "audio": true,
+      "audioHeaders": [
+        "Referer"
+      ]
+    },
+    {
+      "name": "网易云播客",
+      "id": "9d3c7a15e8b24f60a1c5d79e3b04f862",
+      "menus": 1,
+      "books": 30,
+      "episodes": 31,
+      "audio": true,
+      "audioHeaders": [
+        "Referer"
+      ]
+    },
+    {
+      "name": "新闻联播",
+      "id": "b3a8f6d1c27e4f95a0d4e8b6c19f3a57",
+      "menus": 2,
+      "books": 22,
+      "episodes": 14,
+      "audio": true,
+      "audioHeaders": [
+        "Referer",
+        "X-Media-Type"
+      ]
+    },
+    {
+      "name": "喜马拉雅",
+      "id": "6e2b9c4d8a1f4d37b5c0e73a9f1d2b64",
+      "menus": 8,
+      "books": 30,
+      "episodes": 200,
+      "audio": true,
+      "audioHeaders": []
+    },
+    {
+      "name": "全球电台",
+      "id": "564dc6f02740417b99ec2876d5463a71",
+      "menus": 4,
+      "books": 60,
+      "episodes": 1,
+      "audio": true,
+      "audioHeaders": []
+    },
+    {
+      "name": "念音网",
+      "id": "d87f1316fa2e41a299074e2b0c086a17",
+      "menus": 1,
+      "books": 10,
+      "episodes": 3000,
+      "audioError": "此音源需要浏览器验证或页面渲染，当前网页版暂不支持"
+    },
+    {
+      "name": "米听书",
+      "id": "63a4f98615394edea416ba5fd15b569d",
+      "menus": 1,
+      "books": 16,
+      "episodes": 770,
+      "audio": true,
+      "audioHeaders": []
+    },
+    {
+      "name": "听中国",
+      "id": "966475a6c66a47408449a6cfa7696fb0",
+      "menus": 1,
+      "books": 12,
+      "episodes": 840,
+      "audioError": "此音源需要浏览器音频嗅探，当前网页版暂不支持"
+    },
+    {
+      "name": "29听书网",
+      "id": "d4a8f1c63e9b47d2b5a0c7e91f3d6b28",
+      "menus": 2,
+      "error": "The operation was aborted"
+    },
+    {
+      "name": "声音巴士",
+      "id": "405d26b44ad24b25a450ede64bac682f",
+      "menus": 1,
+      "books": 20,
+      "episodes": 1,
+      "audio": true,
+      "audioHeaders": []
+    },
+    {
+      "name": "电台网",
+      "id": "c9e4f7a20b6d4183a7f5d02e8b3c6a19",
+      "menus": 2,
+      "books": 24,
+      "episodes": 1,
+      "audio": true,
+      "audioHeaders": []
+    },
+    {
+      "name": "云图有声",
+      "id": "ab0a5474cd6a40e3ba65045addad390a",
+      "menus": 8,
+      "books": 20,
+      "episodes": 52,
+      "audio": true,
+      "audioHeaders": []
+    },
+    {
+      "name": "听友听书",
+      "id": "a6d1c3f08b2e4759b8e0f4a27c915d36",
+      "error": "听友听书的接口现在访问不了：read ECONNRESET"
+    },
+    {
+      "name": "央视听音",
+      "id": "f5b0d8e27a3c4169b4e2c70d9a61f8b3",
+      "menus": 13,
+      "books": 20,
+      "episodes": 13,
+      "audio": true,
+      "audioHeaders": [
+        "Referer",
+        "X-Media-Type"
+      ]
+    },
+    {
+      "name": "网易云音乐",
+      "id": "2f8b6d4a0c9e43f7b15a8e6d3c7f0a94",
+      "menus": 2,
+      "books": 30,
+      "episodes": 72,
+      "audio": true,
+      "audioHeaders": [
+        "Referer"
+      ]
+    },
+    {
+      "name": "评书随身听",
+      "id": "a20ead64890d4b1b8fd2a6e5d7b21d43",
+      "menus": 1,
+      "books": 15,
+      "episodes": 50,
+      "audio": true,
+      "audioHeaders": [
+        "Referer"
+      ]
+    },
+    {
+      "name": "抖音",
+      "id": "6c3a9e5f1d2b47a8b0c4e7f9a1d3b5c7",
+      "menus": 2,
+      "error": "还没有登录抖音：到“插件”页点开这个源，点“登录”"
+    },
+    {
+      "name": "听听FM",
+      "id": "704f356ff05c47b9a872f50d3216e8a5",
+      "menus": 1,
+      "books": 7,
+      "episodes": 28,
+      "audio": true,
+      "audioHeaders": [
+        "Referer",
+        "X-Media-Type"
+      ]
+    },
+    {
+      "name": "有听网",
+      "id": "c3c5bdc9145c4200a38e9a3558861e98",
+      "menus": 1,
+      "error": "read ECONNRESET"
+    },
+    {
+      "name": "囧贼听书网",
+      "id": "c1bf15e52e0841a1bc621a0a18bdeaea",
+      "menus": 1,
+      "books": 16,
+      "episodes": 656,
+      "audio": true,
+      "audioHeaders": []
+    },
+    {
+      "name": "爱听书",
+      "id": "e30009d5e6714d89a2692666ddf13cbd",
+      "menus": 2,
+      "error": "HTTP 403"
+    },
+    {
+      "name": "起点有声网",
+      "id": "3b7d5e0a9c1f4826a4e7d2c8f6b10e95",
+      "menus": 2,
+      "error": "HTTP 502"
+    },
+    {
+      "name": "悦听吧",
+      "id": "cc17e42c42fc434aa13f783567a947db",
+      "menus": 1,
+      "books": 10,
+      "episodes": 200,
+      "audioError": "此音源需要浏览器验证或页面渲染，当前网页版暂不支持"
+    },
+    {
+      "name": "哔哩哔哩",
+      "id": "c893546d95f84db194046bd8de5dbcbb",
+      "menus": 2,
+      "error": "需要登录会话"
+    },
+    {
+      "name": "酷我畅听",
+      "id": "502efedf0613460a9967d9e86ce2b24c",
+      "menus": 3,
+      "books": 84,
+      "episodes": 0
+    },
+    {
+      "name": "蜻蜓FM",
+      "id": "b7e3a9c15d0f4b62a8c4e17f3d9b0a68",
+      "menus": 2,
+      "books": 12,
+      "episodes": 100,
+      "audio": true,
+      "audioHeaders": []
+    },
+    {
+      "name": "心理FM",
+      "id": "6e2f9a8c41b74d0e9c35a7d1f08b6e42",
+      "menus": 3,
+      "books": 20,
+      "episodes": 10,
+      "audio": true,
+      "audioHeaders": [
+        "Referer"
+      ]
+    },
+    {
+      "name": "百家讲坛",
+      "id": "7c4e1b9d5a2f48e3b6d0a9c3e5f17d28",
+      "menus": 1,
+      "books": 31,
+      "episodes": 7,
+      "audio": true,
+      "audioHeaders": [
+        "Referer",
+        "X-Media-Type"
+      ]
+    },
+    {
+      "name": "相声随身听",
+      "id": "5b0f3c1e9a7d4e26b8c4d1f0a2e7c913",
+      "menus": 4,
+      "books": 12,
+      "episodes": 50,
+      "audio": true,
+      "audioHeaders": [
+        "Referer"
+      ]
+    },
+    {
+      "name": "云听",
+      "id": "c5a8e1f27b3d4c90a6e4d82f1b7c3e59",
+      "menus": 2,
+      "books": 19,
+      "episodes": 159,
+      "audio": true,
+      "audioHeaders": []
+    },
+    {
+      "name": "悦听有声书",
+      "id": "83a7db674cf84d38b4a75806a4eb86d2",
+      "menus": 1,
+      "books": 86,
+      "episodes": 100,
+      "audio": true,
+      "audioHeaders": [
+        "Referer"
+      ]
+    }
+  ],
+  "summary": {
+    "total": 38,
+    "lists": 30,
+    "audioResolved": 25
+  },
+  "browserChecks": {
+    "网易云音乐": "真实歌单、目录、连续播放超过50秒、单曲下载成功",
+    "百家讲坛": "真实节目HLS连续播放超过44秒（独立测试环境）",
+    "喜马拉雅": "前序实测149集目录、连续播放和双集批量下载"
+  }
+}

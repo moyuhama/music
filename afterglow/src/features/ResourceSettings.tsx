@@ -23,7 +23,7 @@ export default function ResourceSettings({ resources: r, onDiscover }: { resourc
         </article>)}
         {r.ready && !r.packages.length && <p className="resource-empty">尚未导入资源包</p>}
       </div>
-      <p className="resource-note">部分音源接口禁止网页跨域访问，或需要网站验证、专用请求头，导入成功不代表所有音源都能在网页版播放。</p>
+      <p className="resource-note">本地服务统一转发音源请求。需要登录、网站验证或原生嗅探的来源仍可能受限；导入成功不代表全部内容可用。</p>
     </section>
   </section>;
 }

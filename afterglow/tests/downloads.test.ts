@@ -23,7 +23,7 @@ test("批量 ZIP 可解压，音频字节不变，歌词与字幕和音频同名
   assert.equal(strFromU8(files['001 歌名.lrc']),'[00:01.00]歌词');
   assert.ok(files['002 歌名.srt']);assert.ok(files['下载失败清单.txt']);
 });
-test("本地下载代理拒绝私有地址、伪造域名及带凭据地址",()=>{
+test("本地下载代理拒绝私有地址、任意端口及带凭据地址",()=>{
   assert.equal(audioTarget('https://a.xmcdn.com/audio.m4a'),'https://a.xmcdn.com/audio.m4a');
-  for(const url of ['http://127.0.0.1/','https://xmcdn.com.evil.test/a','https://evilxmcdn.com/a','https://a.xmcdn.com:444/a','https://user:pass@a.xmcdn.com/a']) assert.throws(()=>audioTarget(url));
+  for(const url of ['http://127.0.0.1/','https://10.0.0.1/a','https://localhost/a','https://a.xmcdn.com:444/a','https://user:pass@a.xmcdn.com/a']) assert.throws(()=>audioTarget(url));
 });

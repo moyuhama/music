@@ -1,3 +1,4 @@
+import { handleResourceProxy } from "./resource-proxy.mjs";
 import http from "node:http";
 import { handleAudioDownload } from "./audio-download.mjs";
 import { handleXimalayaProxy } from "./ximalaya-proxy.mjs";
@@ -64,6 +65,7 @@ if (action === "serve") {
     ".json": "application/json",
   };
   const server = http.createServer(async (req, res) => {
+    if (await handleResourceProxy(req, res)) return;
     if (await handleXimalayaProxy(req, res)) return;
     if (await handleAudioDownload(req, res)) return;
     const url = new URL(req.url, "http://127.0.0.1");

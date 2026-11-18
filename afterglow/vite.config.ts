@@ -1,8 +1,10 @@
 import { defineConfig } from "vite";
-import { ximalayaProxyPlugin } from "./scripts/ximalaya-proxy.mjs";
+import { localSourceProxyPlugin } from "./scripts/local-proxy.mjs";
 
 export default defineConfig({
-  plugins: [ximalayaProxyPlugin()],
+  plugins: [localSourceProxyPlugin()],
+  // Keep hashed files used by already-open local tabs during incremental rebuilds.
+  build: { emptyOutDir: !!process.env.CI },
   worker: { format: "es" },
   base: process.env.PAGES_BASE_PATH || "/",
 });

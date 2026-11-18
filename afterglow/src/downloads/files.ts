@@ -1,6 +1,7 @@
+import {resourceMediaUrl} from "../resources/media.ts";
 import { Zip, ZipPassThrough, strToU8 } from "fflate";
 import type { LyricLine } from "../domain/types";
-export interface DownloadAsset { url: string; fileName?: string; release?(): void; lyricText?: string; lyrics?: LyricLine[]; subtitles?: { text: string; format: "lrc" | "srt" | "vtt" | "txt" }[] }
+export interface DownloadAsset { url: string; fileName?: string; headers?: Record<string,string>; release?(): void; lyricText?: string; lyrics?: LyricLine[]; subtitles?: { text: string; format: "lrc" | "srt" | "vtt" | "txt" }[] }
 export interface DownloadItem { id: string; title: string; resolve(signal: AbortSignal): Promise<DownloadAsset> }
 export function safeName(value: string) { return value.replace(/[\\/:*?"<>|\x00-\x1f]/g, "_").replace(/[. ]+$/g, "").slice(0, 140) || "音频"; }
 export function lrcText(lines: LyricLine[]) {
@@ -20,15 +21,14 @@ export function audioExtension(url: string, mime: string) {
   const path = new URL(url, "https://example.com").pathname;
   return known[mime.split(";")[0].toLowerCase()] || /\.(mp3|m4a|flac|wav|ogg|aac|webm|opus)$/i.exec(path)?.[1].toLowerCase() || "audio";
 }
-export function downloadUrl(url: string) {
-  if (["localhost", "127.0.0.1"].includes(location.hostname)) {
-    const target = new URL(url, location.href);
-    if (target.protocol === "https:" && (target.hostname.endsWith(".xmcdn.com") || target.hostname === "www.scottbuckley.com.au")) return "/__afterglow/audio?url=" + encodeURIComponent(target.href);
-  }
-  return url;
+export function downloadUrl(url: string, headers: Record<string,string> = {}) {
+  const target = new URL(url,location.href);
+  if(target.origin === location.origin && target.pathname === "/__afterglow/audio") {target.searchParams.set("mode","download");return target.href;}
+  if(target.protocol === "blob:" || target.origin === location.origin)return target.href;
+  return resourceMediaUrl(target.href,headers,"download");
 }
 export async function readAudio(asset: DownloadAsset, signal: AbortSignal) {
-  const response = await fetch(downloadUrl(asset.url), { signal: AbortSignal.any([signal, AbortSignal.timeout(90000)]), credentials: "omit" });
+  const response = await fetch(downloadUrl(asset.url,asset.headers), { signal: AbortSignal.any([signal, AbortSignal.timeout(90000)]), credentials: "omit" });
   if (!response.ok) throw new Error(`下载失败（HTTP ${response.status}）`);
   const mime = response.headers.get("Content-Type") || "";
   if (/text\/|json|mpegurl/i.test(mime)) throw new Error("该地址返回网页、播放清单或错误信息，无法保存为音频");
