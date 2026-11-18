@@ -60,14 +60,21 @@ async function request(url: unknown, options: any = {}, readBody = true) {
   }
   const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 12000);
   try {
-    const response = await fetch(href, {
+    const target = new URL(href);
+    const localProxy = ["127.0.0.1", "localhost"].includes(location.hostname) &&
+      ((target.hostname === "mobile.ximalaya.com" && (target.pathname === "/mobile/v1/album/track" || /^\/mobile\/others\/ca\/album\/track\//.test(target.pathname))) ||
+       (target.hostname === "www.ximalaya.com" && (["/revision/album/v1/simple", "/revision/category/allCategoryInfo", "/revision/category/queryCategoryPageAlbums"].includes(target.pathname) || /^\/mobile-playpage\/track\/v3\/baseInfo\//.test(target.pathname)))) &&
+      (!options.method || options.method === "GET");
+    const requestUrl = localProxy ? "/__afterglow/ximalaya?url=" + encodeURIComponent(href) : href;
+    const response = await fetch(requestUrl, {
       method: options.method || "GET", body: options.body, headers,
       credentials: "omit", referrerPolicy: "no-referrer", signal: controller.signal,
     });
-    publicUrl(response.url);
+    if (!localProxy) publicUrl(response.url);
+    const finalUrl = localProxy ? href : response.url;
     if (!readBody) {
       await response.body?.cancel();
-      return { status: response.status, body: "", url: response.url, headers: Object.fromEntries(response.headers) };
+      return { status: response.status, body: "", url: finalUrl, headers: Object.fromEntries(response.headers) };
     }
     const reader = response.body?.getReader();
     const parts: Uint8Array[] = []; let size = 0;
@@ -83,7 +90,7 @@ async function request(url: unknown, options: any = {}, readBody = true) {
     let body: string;
     try { body = new TextDecoder(options.encoding || "utf-8").decode(bytes); }
     catch { body = new TextDecoder().decode(bytes); }
-    return { status: response.status, body, url: response.url, headers: Object.fromEntries(response.headers) };
+    return { status: response.status, body, url: finalUrl, headers: Object.fromEntries(response.headers) };
   } catch (e) {
     if (e instanceof TypeError) throw new Error("浏览器无法访问音源网站，可能是跨域限制或网络连接失败");
     if (e instanceof DOMException && e.name === "AbortError") throw new Error("音源请求超时，请稍后重试");

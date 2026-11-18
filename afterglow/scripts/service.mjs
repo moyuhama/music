@@ -1,4 +1,5 @@
 import http from "node:http";
+import { handleXimalayaProxy } from "./ximalaya-proxy.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -61,7 +62,8 @@ if (action === "serve") {
     ".ico": "image/x-icon",
     ".json": "application/json",
   };
-  const server = http.createServer((req, res) => {
+  const server = http.createServer(async (req, res) => {
+    if (await handleXimalayaProxy(req, res)) return;
     const url = new URL(req.url, "http://127.0.0.1");
     if (url.pathname === "/__afterglow/status") {
       res.writeHead(200, {

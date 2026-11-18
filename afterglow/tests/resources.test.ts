@@ -85,3 +85,7 @@ test("SDK 摘要和 AES 解码与独立生成的已知向量一致", () => {
   assert.equal(resourceCrypto("sha256", ["abc"]), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
   assert.equal(resourceCrypto("aesEcbDecrypt", ["5Hhtik4TgF3Dbwm2zKWrsgTsARZ1MVx6Z5Rvsj67l4s=", "000102030405060708090a0b0c0d0e0f"]), "播放器兼容测试");
 });
+
+test("音源 AES 支持 URL-safe Base64 和省略的填充", () => {
+  assert.equal(resourceCrypto("aesEcbDecrypt", ["9_LgHcrPc7-pociw1yoHe8gfTmRTtgoCfQvU3mHVmj0", "000102030405060708090a0b0c0d0e0f"]), "URL-safe AES 测试");
+});

@@ -73,4 +73,4 @@ node scripts/service.mjs stop
 
 `src/resources` 独立实现插件宿主，脚本运行在 Worker 内的 QuickJS 隔离环境，提供受限网络、HTML 解析和 SDK 工具。导入阶段禁用联网，限制 ZIP 展开体积、脚本内存、执行时间、请求次数和响应体积。插件不能读取音乐库或浏览器全局对象。
 
-GitHub Pages 是静态网页：接口仍须允许浏览器跨域访问，浏览器不能伪装 Referer、Cookie 或任意 User-Agent，也不支持原生宿主的页面验证和音频嗅探。已验证 ShunSources v5.6 的 38 个音源可以注册，全球电台能加载目录并播放；不代表所有来源可用。喜马拉雅分类可加载，但其 mobile.ximalaya.com 章节接口不允许第三方网页读取，需要额外线上请求网关。当前版本没有接入或部署网关。
+GitHub Pages 是静态网页：接口仍须允许浏览器跨域访问，浏览器不能伪装 Referer、Cookie 或任意 User-Agent，也不支持原生宿主的页面验证和音频嗅探。已验证 ShunSources v5.6 的 38 个音源可以注册，全球电台能加载目录并播放；不代表所有来源可用。本地双击启动服务及 Vite 开发/预览服务提供受限的喜马拉雅 JSON 接口转发，解决其章节接口的浏览器跨域限制；仅监听本机，不转发账号 Cookie，不转发任意网址。GitHub Pages 不具备这一服务能力，线上版仍需另外配置后端。

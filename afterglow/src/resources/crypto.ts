@@ -6,7 +6,8 @@ export function resourceCrypto(operation: string, args: unknown[]): string {
     const key = String(args[1]);
     if (!/^(?:[\da-f]{32}|[\da-f]{48}|[\da-f]{64})$/i.test(key)) return "";
     try {
-      return AES.decrypt(String(args[0]), Hex.parse(key), { mode: ECB, padding: Pkcs7 }).toString(Utf8);
+      const encoded = String(args[0]).replace(/-/g, "+").replace(/_/g, "/");
+      return AES.decrypt(encoded, Hex.parse(key), { mode: ECB, padding: Pkcs7 }).toString(Utf8);
     } catch { return ""; }
   }
   throw new Error("不支持的音源加密工具");
