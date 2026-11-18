@@ -43,7 +43,7 @@ export function useMusic() {
           try{const blob=await loadLocalFile(track.source.fileKey);if(blob&&live)registerFile(track.source.fileKey,new File([blob],track.source.fileName||track.title,{type:blob.type,lastModified:track.source.modified}));}catch{}
         }));
         const base=mergeCatalog(savedTracks,saved?.catalogIds??[]);
-        const bundled=await loadBundledLibrary();if(!live)return;
+        const bundled=await loadBundledLibrary(base.tracks);if(!live)return;
         const merged=bundled?mergeBundled(base.tracks,bundled,base.catalogIds):base;
         setTracks(merged.tracks);
         setCatalogIds(merged.catalogIds);
@@ -106,11 +106,12 @@ export function useMusic() {
     return () => clearTimeout(timer);
   }, [toast]);
   useEffect(()=>{
-    if(!ready)return;let live=true;
-    const refresh=()=>{if(document.visibilityState==='hidden')return;void loadBundledLibrary().then(fresh=>{if(!live||!fresh)return;setTracks(old=>{const merged=mergeBundled(old,fresh,catalogIds).tracks;return JSON.stringify(old)===JSON.stringify(merged)?old:merged;});setCatalogIds(old=>{const next=[...new Set([...old,...fresh.map(track=>track.id)])];return next.length===old.length?old:next;});});};
+    if(!ready)return;let live=true,running=false;
+    const refresh=()=>{if(document.visibilityState==='hidden'||running)return;running=true;void loadBundledLibrary(tracks).then(fresh=>{if(!live||!fresh)return;setTracks(old=>{const merged=mergeBundled(old,fresh,catalogIds).tracks;return JSON.stringify(old)===JSON.stringify(merged)?old:merged;});setCatalogIds(old=>{const next=[...new Set([...old,...fresh.map(track=>track.id)])];return next.length===old.length?old:next;});}).finally(()=>{running=false;});};
+    const timer=window.setInterval(refresh,60000);
     window.addEventListener('focus',refresh);document.addEventListener('visibilitychange',refresh);
-    return()=>{live=false;window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh);};
-  },[ready,catalogIds]);
+    return()=>{live=false;clearInterval(timer);window.removeEventListener('focus',refresh);document.removeEventListener('visibilitychange',refresh);};
+  },[ready,catalogIds,tracks]);
   function updateTrack(id: string, patch: Partial<Track>) {
     setTracks((old) => old.map((t) => (t.id === id ? { ...t, ...patch } : t)));
   }

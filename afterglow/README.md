@@ -35,13 +35,9 @@
 
 播放器从 [moyuhama/music-library](https://github.com/moyuhama/music-library) 的 `catalog.json` 加载歌曲；音频、封面和歌词按「类型 / 歌手或演出者 / 专辑」分文件夹提交到独立资源库，通过 Raw 链接直接访问。播放器源代码、构建包和 Git 历史中都不包含这批音频。`public/library/catalog.json` 只是小型备用索引，在线索引新增内容无需重新部署播放器。
 
-当前电脑的资源库位于 `/Users/wangshuailong/Desktop/music-library`，音频位于其中的 `music/类型/歌手或演出者/专辑名/`。添加歌曲、同名 `.lrc`、`.srt`、`.vtt` 或专辑 `cover.jpg` 后，在资源库执行：
+资源库按 `music/类型/歌手或演出者/专辑名/` 放置音频、同名歌词和封面，提交到 main 后，GitHub Actions 自动生成索引。无需在播放器添加或重新部署。播放器每 60 秒检查一次更新，切回窗口也会检查，保持当前播放不中断；Raw 缓存可能带来几分钟延迟。
 
-```sh
-python3 scripts/publish.py --publish
-```
-
-脚本会生成索引，提交音频与索引后推送；已有音频按校验值沿用歌曲 ID。播放器刷新或重新回到窗口时读取最新索引。文件夹和文件名保持不变时，原来的收藏和歌单继续保留。具体流程见资源库 README。
+当前电脑的资源库位于 `/Users/wangshuailong/Desktop/music-library`。资源上传与自动任务详情见资源库 README。
 
 临时添加本机曲库仍可使用 `afterglow/public/music/专辑名/`，本地服务自动扫描；此目录已排除 Git。它不是收集音乐的主目录。手动在页面中导入音频则缓存到当前浏览器。
 
