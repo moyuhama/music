@@ -343,7 +343,6 @@ export default function App() {
                 if(!tracks.length){m.notify("这张专辑暂无可播放的歌曲，请重新导入文件或更新音源。");return;}
                 m.play(tracks[0],tracks.map(track=>track.id));
                 setQueueOpen(false);
-                setPlayerView(true);
               }}
               onOpenPlaylist={(id) => changeView(`playlist:${id}`)}
             /> : <section className="content">
