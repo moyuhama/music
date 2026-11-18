@@ -96,8 +96,8 @@ export default function App() {
   const selected = m.tracks.filter(
     (t) =>
       (view !== "favorites" || t.favorite) &&
-      (view !== "local" || t.source.kind === "local" || t.origin?.kind === "bundled") &&
-      (view !== "remote" || (t.source.kind === "remote" && t.origin?.kind !== "bundled")) &&
+      (view !== "local" || t.source.kind === "local" || (t.origin?.kind === "bundled" && !t.origin.hosted)) &&
+      (view !== "remote" || (t.source.kind === "remote" && !(t.origin?.kind === "bundled" && !t.origin.hosted))) &&
       (view !== "recent" || t.lastPlayed) &&
       (!playlist || playlist.trackIds.includes(t.id)),
   );

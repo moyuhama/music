@@ -104,7 +104,7 @@ export default function TrackList({
                   <small>
                     {!available(track)
                       ? "需重新导入"
-                      : (track.source.kind === "local" || track.origin?.kind === "bundled")
+                      : (track.source.kind === "local" || (track.origin?.kind === "bundled" && !track.origin.hosted))
                         ? "本地文件"
                         : "远端音频"}
                     {track.source.kind === "remote" && !track.persist

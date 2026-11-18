@@ -35,7 +35,7 @@ export default function ListeningModes({ music: m, onOpenAlbum, onOpenPlaylist }
       <div className="mode-card-grid" aria-label="专辑与歌单">
         {cards.map((card, i) => {
           const cover = card.tracks.find((track) => track.cover)?.cover;
-          const kind = card.kind === "album" ? (card.tracks.every(track=>track.source.kind === "local" || track.origin?.kind === "bundled") ? "本地专辑" : "专辑") : "歌单";
+          const kind = card.kind === "album" ? (card.tracks.every(track=>track.source.kind === "local" || (track.origin?.kind === "bundled" && !track.origin.hosted)) ? "本地专辑" : "专辑") : "歌单";
           const Symbol = card.kind === "album" ? Disc3 : ListMusic;
           return (
             <button

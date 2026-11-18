@@ -8,3 +8,6 @@
 .env
 .env.*
 !.env.example
+
+# Audio lives in the separate music-library repository.
+afterglow/public/music/**

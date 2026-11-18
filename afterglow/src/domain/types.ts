@@ -11,7 +11,7 @@ export interface LyricLine {
   time: number;
   text: string;
 }
-export type TrackOrigin = {kind:"bundled";path:string} | {kind:"resource";packageId:string;sourceId:string;itemUrl:string;resolvedAt?:number};
+export type TrackOrigin = {kind:"bundled";path:string;hosted?:boolean} | {kind:"resource";packageId:string;sourceId:string;itemUrl:string;resolvedAt?:number};
 export interface Track {
   origin?: TrackOrigin;
   subtitles?: {text:string;format:"lrc"|"srt"|"vtt"|"txt"}[];
