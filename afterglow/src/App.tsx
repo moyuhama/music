@@ -4,7 +4,6 @@ import {
   AudioLines,
   Compass,
   Settings,
-  Library,
   Heart,
   Link2,
   Plus,
@@ -45,7 +44,6 @@ const viewNames = {
   settings: "设置",
   discovery: "发现",
   modes: "听歌模式",
-  all: "全部音乐",
   favorites: "我喜欢的音乐",
   local: "本地音乐",
   remote: "远端音频",
@@ -57,7 +55,7 @@ export default function App() {
   const visualCover = useRetainedCover(m.current?.cover);
   const palette = useCoverPalette(visualCover);
   useEffect(()=>{if(resources.ready)m.pruneResourceTracks(resources.packages.flatMap(pkg=>pkg.sources.map(source=>pkg.id+"/"+source.id)));},[resources.ready,resources.packages,m.pruneResourceTracks]);
-  const [view, setView] = useState<View>("all");
+  const [view, setView] = useState<View>("modes");
   useEffect(() => {
     if (resources.ready && !resources.hasSources && view === "discovery") setView("settings");
   }, [resources.ready, resources.hasSources, view]);
@@ -92,7 +90,7 @@ export default function App() {
     ? m.playlists.find((p) => p.id === view.slice(9))
     : undefined;
   const title =
-    albumFilter || playlist?.name || viewNames[view as keyof typeof viewNames] || "全部音乐";
+    albumFilter || playlist?.name || viewNames[view as keyof typeof viewNames] || "听歌模式";
   const selected = m.tracks.filter(
     (t) =>
       (view !== "favorites" || t.favorite) &&
@@ -217,9 +215,9 @@ export default function App() {
             <AudioLines size={19} />
             <span>正在播放</span>
           </button>
-          {(["discovery", "modes", "all", "favorites", "settings"] as const).filter((v) => v !== "discovery" || resources.hasSources).map(
+          {(["discovery", "modes", "favorites", "settings"] as const).filter((v) => v !== "discovery" || resources.hasSources).map(
             (v) => {
-              const Icon = v === "modes" || v === "discovery" ? Compass : v === "all" ? Library : v === "settings" ? Settings : Heart;
+              const Icon = v === "modes" || v === "discovery" ? Compass : v === "settings" ? Settings : Heart;
               return (
                 <button
                   key={v}
@@ -340,7 +338,13 @@ export default function App() {
             : view === "discovery" ? <ResourceDiscovery packages={resources.packages} onPlay={m.playResource} />
             : view === "modes" ? <ListeningModes
               music={m}
-              onOpenAlbum={(album) => { changeView("all"); setAlbumFilter(album); }}
+              onOpenAlbum={(album) => {
+                const tracks=m.tracks.filter(track=>track.album===album&&available(track));
+                if(!tracks.length){m.notify("这张专辑暂无可播放的歌曲，请重新导入文件或更新音源。");return;}
+                m.play(tracks[0],tracks.map(track=>track.id));
+                setQueueOpen(false);
+                setPlayerView(true);
+              }}
               onOpenPlaylist={(id) => changeView(`playlist:${id}`)}
             /> : <section className="content">
               <div

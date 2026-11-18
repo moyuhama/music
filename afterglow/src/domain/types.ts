@@ -40,7 +40,6 @@ export type View =
   | "settings"
   | "discovery"
   | "modes"
-  | "all"
   | "favorites"
   | "local"
   | "remote"

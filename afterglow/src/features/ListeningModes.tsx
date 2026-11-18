@@ -43,7 +43,7 @@ export default function ListeningModes({ music: m, onOpenAlbum, onOpenPlaylist }
             <div className="mode-card-wrapper" key={card.id}>
             <button
               className={`mode-card mode-card-${i % 6}`}
-              aria-label={`打开${kind} ${card.title}`}
+              aria-label={`${card.kind==='album'?'播放':'打开'}${kind} ${card.title}`}
               disabled={!m.ready}
               onClick={() => card.kind === "album" ? onOpenAlbum(card.album) : onOpenPlaylist(card.playlistId)}
             >
