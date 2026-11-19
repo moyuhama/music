@@ -16,6 +16,10 @@ type CollectionCard = {
 } & ({ kind: "album"; album: string } | { kind: "playlist"; playlistId: string });
 
 export default function ListeningModes({ music: m, onOpenAlbum, onOpenPlaylist, onCreateAlbum }: Props) {
+  // Sidebar motion changes card widths, while viewport resizing controls column count.
+  const gridColumns=()=>window.innerWidth<=820?2:Math.max(1,Math.floor((window.innerWidth-260+16)/186));
+  const [columns,setColumns]=useState(gridColumns);
+  useEffect(()=>{const resize=()=>setColumns(gridColumns());window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize);},[]);
   const [removing,setRemoving]=useState<CollectionCard|null>(null);
   const albumTracks = new Map<string, Track[]>();
   for (const track of m.tracks) {
@@ -36,7 +40,7 @@ export default function ListeningModes({ music: m, onOpenAlbum, onOpenPlaylist, 
   return (
     <section className="modes-page content">
       <h1>听歌模式</h1>
-      <div className="mode-card-grid" aria-label="专辑与歌单">
+      <div className="mode-card-grid" aria-label="专辑与歌单" style={{"--mode-columns":columns} as React.CSSProperties}>
         {cards.map((card, i) => {
           const cover = (card.kind==='album'?m.albums.find(album=>album.name===card.album)?.cover:undefined)||card.tracks.find((track) => track.cover)?.cover;
           const kind = card.kind === "album" ? (card.tracks.length>0 && card.tracks.every(track=>track.source.kind === "local" || (track.origin?.kind === "bundled" && !track.origin.hosted)) ? "本地专辑" : "专辑") : "歌单";
