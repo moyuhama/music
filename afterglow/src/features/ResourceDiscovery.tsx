@@ -1,4 +1,5 @@
 import {createPortal} from "react-dom";
+import {loadResourceLyrics} from "../resources/lyrics";
 import {resourceMediaUrl} from "../resources/media";
 import { useDownloads } from "../downloads/Downloads";
 import { publicResourceUrl } from "../resources/policy";
@@ -118,9 +119,12 @@ export default function ResourceDiscovery({ packages, onPlay }: { packages: Reso
   function episodeDownload(episode: ResourceEpisode): DownloadItem {
     const current = entry!;
     return {id:episode.url,title:episode.title,async resolve(signal) {
-      const result = await runResource<string | (DownloadAsset & {headers?:Record<string,string>})>(current.pkg,"audio",current.source.id,[episode.url],signal);
+      const [result,lyrics] = await Promise.all([
+        runResource<string | (DownloadAsset & {headers?:Record<string,string>})>(current.pkg,"audio",current.source.id,[episode.url],signal),
+        episode.lyricText?Promise.resolve(null):loadResourceLyrics({id:episode.url,title:episode.title,artist:current.source.name,source:{kind:'remote',url:current.source.url},origin:{kind:'resource',packageId:current.pkg.id,sourceId:current.source.id,itemUrl:episode.url},addedAt:0,persist:false,favorite:false},signal),
+      ]);
       const audio = typeof result === "string" ? {url:result} : result;
-      return {...audio,url:publicResourceUrl(audio.url),lyricText:audio.lyricText || episode.lyricText,subtitles:[...(audio.subtitles || []),...(episode.subtitles || [])]};
+      return {...audio,url:publicResourceUrl(audio.url),lyricText:audio.lyricText || episode.lyricText || lyrics?.lyricText,subtitles:[...(audio.subtitles || []),...(episode.subtitles || [])]};
     }};
   }
   function back() {

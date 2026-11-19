@@ -1,6 +1,7 @@
 import {saveLocalFile,loadLocalFile,removeLocalFile} from "../storage/local-files";
 import {loadBundledLibrary} from "./bundled-library";
 import {libraryTrack,migratePlaybackHistory,mergeBundled,reconcileLegacyCatalog,remapTrackIds} from "../domain/library";
+import {loadResourceLyrics} from "../resources/lyrics";
 import type {ResourcePlayback} from "./ResourceDiscovery";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Track, PlayMode, Playlist, Album, AlbumInfo } from "../domain/types";
@@ -25,6 +26,15 @@ export function useMusic() {
   const importLock = useRef(false);
   const state = useSyncExternalStore(player.subscribe, player.snapshot);
   const current = tracks.find((t) => t.id === state.trackId);
+  useEffect(()=>{
+    if(!current||current.lyrics?.length)return;
+    const controller=new AbortController(),trackId=current.id;
+    void loadResourceLyrics(current,controller.signal).then(result=>{
+      if(!result||controller.signal.aborted)return;
+      setTracks(old=>old.map(track=>track.id===trackId&&!track.lyrics?.length?{...track,...result}:track));
+    }).catch(()=>{});
+    return()=>controller.abort();
+  },[current?.id,current?.origin?.kind==='resource'?current.origin.itemUrl:undefined]);
   const ids = queue.filter((id) =>
     tracks.some((t) => t.id === id && available(t)),
   );
