@@ -1,6 +1,8 @@
 import {useRetainedCover} from "./interactions/useRetainedCover";
 import { useEffect, useRef, useState } from "react";
 import {
+  PanelLeftClose,
+  PanelLeftOpen,
   AudioLines,
   Compass,
   Settings,
@@ -56,6 +58,8 @@ export default function App() {
   const visualCover = useRetainedCover(m.current?.cover);
   const palette = useCoverPalette(visualCover);
   useEffect(()=>{if(resources.ready)m.pruneResourceTracks(resources.packages.flatMap(pkg=>pkg.sources.map(source=>pkg.id+"/"+source.id)));},[resources.ready,resources.packages,m.pruneResourceTracks]);
+  const [sidebarCollapsed,setSidebarCollapsed]=useState(()=>{try{return localStorage.getItem('afterglow-sidebar-collapsed')==='1';}catch{return false;}});
+  useEffect(()=>{try{localStorage.setItem('afterglow-sidebar-collapsed',sidebarCollapsed?'1':'0');}catch{}},[sidebarCollapsed]);
   const [view, setView] = useState<View>("modes");
   useEffect(() => {
     if (resources.ready && !resources.hasSources && view === "discovery") setView("settings");
@@ -155,7 +159,7 @@ export default function App() {
   }, []);
   return (
     <div
-      className={`app soda-app ${detailOpen ? "detail-is-open is-listening" : ""}`}
+      className={`app soda-app ${sidebarCollapsed?"sidebar-is-collapsed":""} ${detailOpen ? "detail-is-open is-listening" : ""}`}
       data-view={detailOpen ? "player" : view}
       style={
         {
@@ -202,7 +206,7 @@ export default function App() {
           e.target.value = "";
         }}
       />
-      <aside className="sidebar">
+      <aside className="sidebar" aria-label="侧边栏">
         <a
           href="#"
           className="brand"
@@ -220,9 +224,10 @@ export default function App() {
           </strong>
         </a>
         <div className="nav-group-title">我的音乐</div>
-        <nav aria-label="音乐库导航">
+        <nav id="desktop-music-navigation" aria-label="音乐库导航">
           <button
             aria-label="播放器首页"
+            data-sidebar-tip={sidebarCollapsed?"正在播放":undefined}
             className={`nav-item ${detailOpen ? "active" : ""}`}
             onClick={() => setPlayerView(true)}
           >
@@ -236,6 +241,7 @@ export default function App() {
                 <button
                   key={v}
                   aria-label={viewNames[v]}
+                  data-sidebar-tip={sidebarCollapsed?viewNames[v]:undefined}
                   className={`nav-item ${!detailOpen && view === v ? "active" : ""}`}
                   onClick={() => changeView(v)}
                 >
@@ -259,6 +265,10 @@ export default function App() {
           </div>
           <span className="version">余音 Web · v0.2</span>
         </div>
+        <button className="sidebar-toggle" aria-label={sidebarCollapsed?'展开侧边栏':'收起侧边栏'} aria-expanded={!sidebarCollapsed} aria-controls="desktop-music-navigation" data-sidebar-tip={sidebarCollapsed?'展开侧边栏':undefined} onClick={()=>setSidebarCollapsed(value=>!value)}>
+          {sidebarCollapsed?<PanelLeftOpen size={19}/>:<PanelLeftClose size={19}/>}
+          <span>收起侧边栏</span>
+        </button>
       </aside>
       <main className="app-main">
         <header className="topbar">
